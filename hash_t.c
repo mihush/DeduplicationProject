@@ -1,12 +1,3 @@
-//
-// Created by mihush on 11/12/2017.
-//
-
-#ifndef DEDUPLICATION_PROJ_HASHTABLE_H
-#define DEDUPLICATION_PROJ_HASHTABLE_H
-
-#pragma once
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -156,4 +147,3 @@ char *ht_get( hashtable_t *hashtable, char *key ) {
     }
 
 }
-#endif //DEDUPLICATION_PROJ_HASHTABLE_H

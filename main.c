@@ -5,7 +5,7 @@ int main() {
     FILE *fp;
     char buff[255];
 
-    fp = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
+    fp = fopen("C:\\Users\\mihush\\Documents\\Technion\\Sem_7\\Gala - project\\input_example.txt" , "r");
     if(fp ==NULL){
         printf("Can't open input file\n");
         return 0;
