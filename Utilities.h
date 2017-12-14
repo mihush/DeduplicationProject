@@ -1,0 +1,18 @@
+//
+// Created by Polina on 14-Dec-17.
+//
+
+#ifndef DEDUPLICATIONPROJECT_UTILITIES_H
+#define DEDUPLICATIONPROJECT_UTILITIES_H
+
+typedef enum{
+    SUCCESS,
+    INVALID_INPUT,
+    OUT_OF_MEMORY
+} ErrorCode;
+
+#define BLOCK_ID_LEN 20
+#define FILE_ID_LEN 30
+
+
+#endif //DEDUPLICATIONPROJECT_UTILITIES_H
