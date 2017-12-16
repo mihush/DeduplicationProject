@@ -158,6 +158,7 @@ int main() {
                         block_line_count++;
                     }
                 }
+
                 if(!feof(input_file)){ // !!! WE HAVE REACHED THE END OF THE CURRENT INPUT BLOCK !!!
                     fputs("-------> finished Reading a block\n\n" , res_file);
                     block_line_count = 0; //zero the line count for the next block
