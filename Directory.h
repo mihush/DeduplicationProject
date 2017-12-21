@@ -105,15 +105,15 @@ unsigned int dir_get_depth(Dir dir){
 }
 
 /* Adding file into the directory */
-ErrorCode dir_add_file(Dir dir , unsigned int dir_sn){
-    if(dir != NULL && dir_sn > 0){
+ErrorCode dir_add_file(Dir dir , unsigned int file_sn){
+    if(dir != NULL && file_sn > 0){
         return INVALID_INPUT;
     }
     unsigned int* temp = malloc(sizeof(*temp));
     if(!temp){
         return OUT_OF_MEMORY;
     }
-    *temp = dir_sn;
+    *temp = file_sn;
     ListResult res = listInsertFirst(dir->files_list , temp);
     if(res != LIST_SUCCESS){
         free(temp);
@@ -127,7 +127,22 @@ ErrorCode dir_add_file(Dir dir , unsigned int dir_sn){
 }
 
 /* Adding sub_dir into the directory */
-ErrorCode dir_add_sub_dir(){
+ErrorCode dir_add_sub_dir(Dir dir , unsigned int dir_sn){
+    if(dir != NULL && dir_sn > 0){
+        return INVALID_INPUT;
+    }
+    unsigned int* temp = malloc(sizeof(*temp));
+    if(!temp){
+        return OUT_OF_MEMORY;
+    }
+    *temp = dir_sn;
+    ListResult res = listInsertFirst(dir->files_list , temp);
+    if(res != LIST_SUCCESS){
+        free(temp);
+        printf("--->Allocation error while insert a sub_sir into directory");
+        return OUT_OF_MEMORY;
+    }
+    dir->num_of_subdirs += 1;
 
     return SUCCESS;
 }
