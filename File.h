@@ -49,6 +49,7 @@ static void free_block_info(ListElement block_info){
 struct file_t{
     unsigned long file_sn; // file serial number
     char* file_id; // file id
+    unsigned int file_depth; // the high in depot tree
     unsigned int dir_sn; //Serial number of the directory containing this file
     int num_blocks; //number of blocks contained in this file
     List blocks_list; // list of block_info objects contained in this file
@@ -61,7 +62,7 @@ typedef struct file_t *File;
 /*
  *
  */
-File file_create(char* file_id , unsigned long file_sn , unsigned int dir_sn){
+File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int dir_sn){
     assert(file_sn > 0);
     File file = malloc(sizeof(*file));
     if(file == NULL){
@@ -80,6 +81,7 @@ File file_create(char* file_id , unsigned long file_sn , unsigned int dir_sn){
     file->file_sn = file_sn;
     file->dir_sn = dir_sn;
     file->num_blocks = 0;
+    file->file_depth = depth;
 
     file->blocks_list = listCreate(copy_block_info , free_block_info);
     if(file->blocks_list == NULL){
@@ -106,15 +108,23 @@ void file_destroy(File file){
 /*
  *
  */
-long file_get_SN(File file){
+unsigned long file_get_SN(File file){
     assert(file);
     return file->file_sn;
 }
+
 char* file_get_ID(File file){
     assert(file);
     return file->file_id;
 }
 
+/*
+ *
+ */
+unsigned int file_get_depth(File file){
+    assert(file);
+    return file->file_depth;
+}
 /*
  *
  */
