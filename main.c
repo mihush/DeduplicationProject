@@ -253,7 +253,7 @@ int main(){
                         file_id_res = case_7_hash_file_id(res_file_1 , buff , i);
                         //Case adding into Files- HashT
                         if (obj_type == 'F'){
-                            File temp_file = ht_set(ht_files , file_id_res ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
+                            File temp_file = ht_set(ht_files , file_id_res , depth ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
                             printf("Created file with:\n");
                             printf("file id - %s\n" , temp_file->file_id);
                             printf("file sn - %lu\n" , temp_file->file_sn);

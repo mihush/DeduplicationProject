@@ -80,7 +80,7 @@ long int ht_hash( HashTable ht, char *key ) {
 /* Create a key-value pair */
 //For block - size parameter will contain the block size
 //For File - size parameter will be -1
-Entry ht_newpair(char *key, unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag){
+Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag){
     Entry newpair  = malloc(sizeof(*newpair));
     if(newpair == NULL){
         return NULL;
@@ -95,7 +95,7 @@ Entry ht_newpair(char *key, unsigned long sn , unsigned int size ,unsigned int d
     if(flag == 'B'){ // save the data object
         newpair->data = block_create(key , sn , size);
     }else{ //This is a file object
-        newpair->data = file_create(key , sn , dir_sn);
+        newpair->data = file_create(key , depth , sn , dir_sn);
     }
     if(newpair->data == NULL) {
         free(newpair->key);
@@ -107,7 +107,7 @@ Entry ht_newpair(char *key, unsigned long sn , unsigned int size ,unsigned int d
 }
 
 /* Insert a key-value pair into a hash table. */
-Data ht_set(HashTable ht, char *key, unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag) {
+Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag) {
     Entry newpair = NULL;
     Entry next = NULL;
     Entry last = NULL;
@@ -126,7 +126,7 @@ Data ht_set(HashTable ht, char *key, unsigned long sn , unsigned int size ,unsig
         //Return the pointer to the Block/File that already exists in the hash
         return next->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
-        newpair = ht_newpair(key, sn, size, dir_sn, flag ); //allocate new pair
+        newpair = ht_newpair(key, depth , sn, size, dir_sn, flag ); //allocate new pair
         if(newpair == NULL){
             printf(" --> Allocation Error in adding new value to hash\n");
             return NULL;
