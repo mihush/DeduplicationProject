@@ -5,14 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "HashTable.h"
-#include <io.h>
-
-/***************************************************** DEFINES *******************************************************/
-#define FILE_ATTRIBUTE_DIRECTORY 0x10 //16 (Decimal) - directory
-#define FILE_ATTRIBUTE_ARCHIVE 0x20 //32 (Decimal) - File without 0x10
-
-
-
+#include <windows.h>
 
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
@@ -45,7 +38,7 @@ char* case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
     }
     strncpy(dir_name_hash , buff , DIR_NAME_HASH);
     dir_name_hash[DIR_NAME_HASH] = '\0';
-    fprintf(res_file , "--> File name is: %s \n" , dir_name_hash);
+    fprintf(res_file , "--> Dir name is: %s \n" , dir_name_hash);
     return dir_name_hash;
 }
 
@@ -71,15 +64,16 @@ unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
  *
  */
 char case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
-    unsigned int file_attribute = (int)strtol(buff,(char **)NULL, 10);
+    DWORD file_attribute = (int)strtol(buff,(char **)NULL, 10);
     fprintf(res_file , "--> File attribute is : %d \n" , file_attribute);
 
     char res;
-    if((FILE_ATTRIBUTE_DIRECTORY & file_attribute) && ( FILE_ATTRIBUTE_ARCHIVE & file_attribute)){
-        res = 'D';
-    }
-    else{
+    if ( FILE_ATTRIBUTE_ARCHIVE & file_attribute){
+        fprintf(res_file , "---> The object is a File \n"  );
         res = 'F';
+    }else if((FILE_ATTRIBUTE_DIRECTORY & file_attribute)){
+        fprintf(res_file , "---> The object is a Directory\n");
+        res = 'D';
     }
     return res;
 }
@@ -170,19 +164,14 @@ int main(){
     int block_line_count = 0;
 
     unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
-    printf(" GOT HERE -0- :( \n");
     HashTable ht_files , ht_blocks , ht_dirs;
     ht_files = ht_create();
-    printf(" GOT HERE -1- :( \n");
     ht_blocks = ht_create();
-    printf(" GOT HERE -2- :( \n");
     //ht_dirs = ht_create();
     if(ht_files == NULL || ht_blocks == NULL || ht_dirs == NULL){
         printf(" ---> Failed Allocating Hashtables in parser =[ \n");
         return 0;
     }
-    printf(" GOT HERE :( \n");
-
 
     /* Go Over each file, parsing the data into correspond structures */
     /* -------------------- Get File Names To Process -------------------- */
@@ -205,7 +194,7 @@ int main(){
     printf(" --- Opening File --- \n");
     // Input_file = fopen("//home//mihuahams//project_files//input_example.txt" , "r");
     input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
-    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w+");
+    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
     if(input_file == NULL){ //check the file was opened successfully - if not terminate
         printf(" ---> Can't open input file/s =[ \n");
         return 0;
@@ -229,8 +218,7 @@ int main(){
         printf(" --- Skipped over the file-system data block successfully--- \n");
 
         /* Read File till the end - parse each block and add it to the corresponding structure */
-        int count = 0;
-        while(!feof(input_file) && count < 10){
+        while(!feof(input_file)){
             fgets(buff, BUFFER_SIZE , input_file);
             block_line_count++;
             /* Check if we have reached the end of the file, nothing more to read */

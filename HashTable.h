@@ -142,11 +142,9 @@ Data ht_set(HashTable ht, char *key, unsigned long sn , unsigned int size ,unsig
 
         } else  { /* We're in the middle of the list. */
             //Shouldn't really happen
-            res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w+");
-            fprintf(res_file_1 , "--> Errorrrrrrrrrrrrrrrrrrr\n");
+            printf("--> Errorrrrrrrrrrrrrrrrrrr\n");
             newpair->next = next;
             last->next = newpair;
-            fclose(res_file_1);
         }
         return newpair->data;
     }
