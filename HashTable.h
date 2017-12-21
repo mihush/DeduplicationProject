@@ -5,157 +5,170 @@
 #ifndef DEDUPLICATION_PROJ_HASHTABLE_H
 #define DEDUPLICATION_PROJ_HASHTABLE_H
 
-#pragma once
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
 
-struct entry_s {
-    char *key;
-    char *value;
-    struct entry_s *next; //Chain-hashing solution. ptr to the next element
-};
+#include "Block.h"
+#include "File.h"
 
-typedef struct entry_s entry_t;
+#define GROWTH_FACTOR 2
+#define INIT_SIZE 1507
+typedef void* Data;
+
+/* ------------------------------------------------------------------------------- */
+struct entry_t {
+    char *key;
+    Data data;
+    struct entry_t *next;//Chain-hashing solution. ptr to the next element
+};
+typedef struct entry_t *Entry;
 
 struct hashtable_t {
     long size_table;
-    int num_of_elements;
-    struct entry_s **table;
+    long num_of_elements;
+    Entry *table; // array of pointers to Entries
 };
-
-typedef struct hashtable_t HashTable;
-
+typedef struct hashtable_t *HashTable;
+/* ------------------------------------------------------------------------------- */
 
 /* Create a new HashTable. */
-HashTable *ht_create( long size ) {
-
-    HashTable *hashtable = NULL;
-    int i=0;
-
-    if( size < 1 ) return NULL;
+HashTable ht_create() {
+    HashTable ht = NULL;
+    ht->size_table = INIT_SIZE;
+    ht->num_of_elements = 0;
 
     /* Allocate the table itself */
-    hashtable = malloc( sizeof( HashTable ));
-    if( !hashtable) {
+    ht = malloc(sizeof(*ht));
+    if(!ht){ //check allocation was successful
+        printf("Allocation of ht object FAILED !!\n");
         return NULL;
     }
 
     /* Allocate pointers to the head nodes */
-    hashtable->table = malloc( sizeof( entry_t * ) * size );
-    if(!hashtable->table ) {
+    ht -> table = malloc(sizeof(Entry) * (ht->size_table));
+    if(!ht -> table ){ //check array od pointers was allocated successfully
+        printf("Allocation of hashtable array FAILED !!!!\n");
+        free(ht);
         return NULL;
     }
-    for( i = 0; i < size; i++ ) {
-        hashtable->table[i] = NULL;
+
+    for(int i = 0; i < (ht->size_table) ; i++ ){
+        ht->table[i] = NULL;
     }
 
-    hashtable->size = size;
-    return hashtable;
+    return ht;
 }
 
 /* Hash a string for a particular hash table. */
-int ht_hash( HashTable *hashtable, char *key ) {
-
+long int ht_hash( HashTable ht, char *key ) {
     unsigned long int hashval;
     int i = 0;
 
     /* Convert our string to an integer */
-    while( hashval < ULONG_MAX && i < strlen( key ) ) {
+    while((hashval < ULONG_MAX) && (i < strlen(key))){
         hashval = hashval << 8;
-        hashval += key[ i ];
+        hashval += key[i];
         i++;
     }
 
-    return hashval % hashtable->size;
+    return hashval % (ht->size_table);
 }
 
-/* Create a key-value pair. */
-entry_t *ht_newpair( char *key, char *value ) {
-    entry_t *newpair;
-
-    if( ( newpair = malloc( sizeof( entry_t ) ) ) == NULL ) {
+/* Create a key-value pair */
+//For block - size parameter will contain the block size
+//For File - size parameter will be -1
+Entry ht_newpair(char *key, unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag){
+    Entry newpair  = malloc(sizeof(*newpair));
+    if(newpair == NULL){
         return NULL;
     }
 
-    if( ( newpair->key = strdup( key ) ) == NULL ) {
+    newpair->key = strdup(key);
+    if(newpair->key == NULL){
+        free(newpair);
         return NULL;
     }
 
-    if( ( newpair->value = strdup( value ) ) == NULL ) {
+    if(flag == 'B'){ // save the data object
+        newpair->data = block_create(key , sn , size);
+    }else{ //This is a file object
+        newpair->data = file_create(key , sn , dir_sn);
+    }
+    if(newpair->data == NULL) {
+        free(newpair->key);
+        free(newpair);
         return NULL;
     }
-
     newpair->next = NULL;
-
     return newpair;
 }
 
 /* Insert a key-value pair into a hash table. */
-void ht_set( HashTable *hashtable, char *key, char *value ) {
-    int bin = 0;
-    entry_t *newpair = NULL;
-    entry_t *next = NULL;
-    entry_t *last = NULL;
+Data ht_set(HashTable ht, char *key, unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag) {
+    Entry newpair = NULL;
+    Entry next = NULL;
+    Entry last = NULL;
 
-    bin = ht_hash( hashtable, key );
+    long int hash_key = ht_hash( ht , key );
+    next = ht->table[hash_key];
 
-    next = hashtable->table[ bin ];
-
+    /* Advance until get the end of the list OR first matching key*/
     while( next != NULL && next->key != NULL && strcmp( key, next->key ) > 0 ) {
         last = next;
         next = next->next;
     }
 
-    /* There's already a pair.  Let's replace that string. */
+    /* There's already a pair. Let's replace that string. */
     if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
-
-        free( next->value );
-        next->value = strdup( value );
-
-        /* Nope, could't find it.  Time to grow a pair. */
-    } else {
-        newpair = ht_newpair( key, value );
-
-        /* We're at the start of the linked list in this bin. */
-        if( next == hashtable->table[ bin ] ) {
+        //Return the pointer to the Block/File that already exists in the hash
+        return next->data;
+    } else { /* Nope, could't find it.  Time to grow a pair. */
+        newpair = ht_newpair(key, sn, size, dir_sn, flag ); //allocate new pair
+        if(newpair == NULL){
+            printf(" --> Allocation Error in adding new value to hash\n");
+            return NULL;
+        }
+        /* We're at the start of the linked list in this hash_key. */
+        if( next == ht->table[hash_key] ){ //First element list
             newpair->next = next;
-            hashtable->table[ bin ] = newpair;
+            ht->table[hash_key] = newpair;
 
-            /* We're at the end of the linked list in this bin. */
+            /* We're at the end of the linked list in this hash_key. */
         } else if ( next == NULL ) {
             last->next = newpair;
 
-            /* We're in the middle of the list. */
-        } else  {
+        } else  { /* We're in the middle of the list. */
+            //Shouldn't really happen
+            printf("--> Errorrrrrrrrrrrrrrrrrrr\n");
             newpair->next = next;
             last->next = newpair;
         }
+        return newpair->data;
     }
 }
 
-/* Retrieve a key-value pair from a hash table. */
-char *ht_get( HashTable *hashtable, char *key ) {
-    int bin = 0;
-    entry_t *pair;
+/* Retrieve pointer for block/file element with corresponding key in hash table. */
+Data ht_get( HashTable ht, char *key ) {
+    long int hash_key = ht_hash(ht, key);
+    Entry pair = ht->table[hash_key];
 
-    bin = ht_hash( hashtable, key );
-
-    /* Step through the bin, looking for our value. */
-    pair = hashtable->table[ bin ];
+    /* Step through the hash_key, looking for our value. */
     while( pair != NULL && pair->key != NULL && strcmp( key, pair->key ) > 0 ) {
         pair = pair->next;
     }
 
     /* Did we actually find anything? */
     if( pair == NULL || pair->key == NULL || strcmp( key, pair->key ) != 0 ) {
+        //didn't find anything
         return NULL;
 
     } else {
-        return pair->value;
+        //found the key - return the data
+        return pair->data;
     }
-
 }
+
+
 #endif //DEDUPLICATION_PROJ_HASHTABLE_H

@@ -4,19 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
-/********************************************* Definitions& Magic Numbers *********************************************/
-/* Magic Numbers */
-#define STR_OF_Z 12
-#define DIR_NAME_LEN 11
-#define DIR_NAME_HASH 10
-#define BLOCK_ID_LEN 13
-#define FILE_ID_LEN 18
-#define BUFFER_SIZE 255
-#define LETTERS_CHAR 48
-#define LINE_SPACE 10
-#define CHUNKE_ID_LEN 10
-#define CHUNKE_SIZE_LEN 6
+#include "HashTable.h"
 
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
@@ -45,7 +33,7 @@ void case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
     char dir_name_hash[DIR_NAME_LEN];
     strncpy(dir_name_hash , buff , DIR_NAME_HASH);
     dir_name_hash[DIR_NAME_HASH] = '\0';
-    fprintf(res_file , "-->File name is: %s \n" , dir_name_hash);
+    fprintf(res_file , "--> File name is: %s \n" , dir_name_hash);
     return;
 }
 
@@ -151,6 +139,9 @@ int main(){
     bool read_empty_line_chucnks = false;
     int block_line_count = 0;
 
+    long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
+    HashTable ht_files , ht_blocks;
+
     /* Go Over each file, parsing the data into correspond structures */
     /* -------------------- Get File Names To Process -------------------- */
     /*printf("How many files would you like to process?\n");
@@ -172,8 +163,8 @@ int main(){
     printf(" --- Opening File --- \n");
     // Line for CS server
     // Input_file = fopen("//home//mihuahams//project_files//input_example.txt" , "r");
-    input_file = fopen("C:\\Users\\mihush\\Documents\\Technion\\Sem_7\\Gala - project\\input_example.txt" , "r");
-    res_file_1 = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\res_file_1.txt" , "w");
+    input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
+    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
     if(input_file == NULL){ //check the file was opened successfully - if not terminate
         printf(" --- Can't open input file --- \n");
         return 0;

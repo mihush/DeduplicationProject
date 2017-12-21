@@ -11,8 +11,17 @@ typedef enum{
     OUT_OF_MEMORY
 } ErrorCode;
 
-#define BLOCK_ID_LEN 20
-#define FILE_ID_LEN 30
-
+/********************************************* Definitions& Magic Numbers *********************************************/
+/* Magic Numbers */
+#define STR_OF_Z 12
+#define DIR_NAME_LEN 11
+#define DIR_NAME_HASH 10
+#define BLOCK_ID_LEN 13
+#define FILE_ID_LEN 18
+#define BUFFER_SIZE 255
+#define LETTERS_CHAR 48
+#define LINE_SPACE 10
+#define CHUNKE_ID_LEN 10
+#define CHUNKE_SIZE_LEN 6
 
 #endif //DEDUPLICATIONPROJECT_UTILITIES_H
