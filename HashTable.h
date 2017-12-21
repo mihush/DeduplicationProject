@@ -14,7 +14,7 @@
 #include "File.h"
 
 #define GROWTH_FACTOR 2
-#define INIT_SIZE 1507
+#define INIT_SIZE 5007
 typedef void* Data;
 
 /* ------------------------------------------------------------------------------- */
@@ -36,8 +36,7 @@ typedef struct hashtable_t *HashTable;
 /* Create a new HashTable. */
 HashTable ht_create() {
     HashTable ht = NULL;
-    ht->size_table = INIT_SIZE;
-    ht->num_of_elements = 0;
+
 
     /* Allocate the table itself */
     ht = malloc(sizeof(*ht));
@@ -45,6 +44,8 @@ HashTable ht_create() {
         printf("Allocation of ht object FAILED !!\n");
         return NULL;
     }
+    ht->size_table = INIT_SIZE;
+    ht->num_of_elements = 0;
 
     /* Allocate pointers to the head nodes */
     ht -> table = malloc(sizeof(Entry) * (ht->size_table));
@@ -141,9 +142,11 @@ Data ht_set(HashTable ht, char *key, unsigned long sn , unsigned int size ,unsig
 
         } else  { /* We're in the middle of the list. */
             //Shouldn't really happen
-            printf("--> Errorrrrrrrrrrrrrrrrrrr\n");
+            res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w+");
+            fprintf(res_file_1 , "--> Errorrrrrrrrrrrrrrrrrrr\n");
             newpair->next = next;
             last->next = newpair;
+            fclose(res_file_1);
         }
         return newpair->data;
     }

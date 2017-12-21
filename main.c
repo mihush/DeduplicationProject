@@ -5,6 +5,14 @@
 #include <string.h>
 #include <stdbool.h>
 #include "HashTable.h"
+#include <io.h>
+
+/***************************************************** DEFINES *******************************************************/
+#define FILE_ATTRIBUTE_DIRECTORY 0x10 //16 (Decimal) - directory
+#define FILE_ATTRIBUTE_ARCHIVE 0x20 //32 (Decimal) - File without 0x10
+
+
+
 
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
@@ -29,45 +37,67 @@ bool check_12_z(char buff[STR_OF_Z]){
  * */
 
 /* DIRECTORY NAME */
-void case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
-    char dir_name_hash[DIR_NAME_LEN];
+char* case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
+    char* dir_name_hash = malloc(sizeof(char)*DIR_NAME_LEN);
+    if(!dir_name_hash){
+        printf("---> string allocation Failure\n ");
+        return NULL;
+    }
     strncpy(dir_name_hash , buff , DIR_NAME_HASH);
     dir_name_hash[DIR_NAME_HASH] = '\0';
     fprintf(res_file , "--> File name is: %s \n" , dir_name_hash);
-    return;
+    return dir_name_hash;
 }
 
 /* NAMESPACE DEPTH */
-void case_4_get_depth(FILE *res_file , char buff[BUFFER_SIZE]){
-    int namespace_depth = (int)strtol(buff,(char **)NULL, 10);
+unsigned short case_4_get_depth(FILE *res_file , char buff[BUFFER_SIZE]){
+    unsigned short namespace_depth = (unsigned short)strtol(buff,(char**)NULL, 10);
     fprintf(res_file , "--> Namespace depth is : %d \n" , namespace_depth);
-    return;
+    return namespace_depth ;
 }
 
 /* FILE SIZE */
-void case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
-    int file_size = (int)strtol(buff,(char **)NULL, 10);
+unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
+    unsigned int file_size = (unsigned int)strtol(buff,(char **)NULL, 10);
     fprintf(res_file , "--> File size is : %d \n" , file_size);
-    return;
+    return file_size;
 }
 
 /* FILE ATTRIBUTES VALUE */
-void case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
-    int file_attribute = (int)strtol(buff,(char **)NULL, 10);
+/*
+ * Returns one from { 'D' , 'F'}
+ *  @ 'D' - for directory
+ *  @ 'F' - for file
+ *
+ */
+char case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
+    unsigned int file_attribute = (int)strtol(buff,(char **)NULL, 10);
     fprintf(res_file , "--> File attribute is : %d \n" , file_attribute);
-    return;
+
+    char res;
+    if((FILE_ATTRIBUTE_DIRECTORY & file_attribute) && ( FILE_ATTRIBUTE_ARCHIVE & file_attribute)){
+        res = 'D';
+    }
+    else{
+        res = 'F';
+    }
+    return res;
 }
 
 /* FILE ID */
-void case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_of_file){
-    char file_id[FILE_ID_LEN]; // The value is 15 chars + 2 chars for index +1 for eol (end of line)
+char* case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_of_file){
+    char* file_id = malloc(sizeof(char)*FILE_ID_LEN); // The value is 15 chars + 2 chars for index +1 for eol (end of line)
+    if(!file_id){
+        printf("---> string allocation Failure\n ");
+        return NULL;
+    }
     //only first 15 digits depict the hashed directory name
     strncpy(file_id , buff , (FILE_ID_LEN - 3));
     file_id[(FILE_ID_LEN - 3)] = '_';
     file_id[(FILE_ID_LEN - 2)] = (LETTERS_CHAR + ind_num_of_file);
     file_id[(FILE_ID_LEN - 1)] = '\0';
     fprintf(res_file , "-->File id is: %s \n" , file_id);
-    return;
+    return file_id;
 }
 
 /* Line 13 is SV */
@@ -139,8 +169,20 @@ int main(){
     bool read_empty_line_chucnks = false;
     int block_line_count = 0;
 
-    long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
-    HashTable ht_files , ht_blocks;
+    unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
+    printf(" GOT HERE -0- :( \n");
+    HashTable ht_files , ht_blocks , ht_dirs;
+    ht_files = ht_create();
+    printf(" GOT HERE -1- :( \n");
+    ht_blocks = ht_create();
+    printf(" GOT HERE -2- :( \n");
+    //ht_dirs = ht_create();
+    if(ht_files == NULL || ht_blocks == NULL || ht_dirs == NULL){
+        printf(" ---> Failed Allocating Hashtables in parser =[ \n");
+        return 0;
+    }
+    printf(" GOT HERE :( \n");
+
 
     /* Go Over each file, parsing the data into correspond structures */
     /* -------------------- Get File Names To Process -------------------- */
@@ -161,17 +203,22 @@ int main(){
 
     /* -------------------- File Opening -------------------- */
     printf(" --- Opening File --- \n");
-    // Line for CS server
     // Input_file = fopen("//home//mihuahams//project_files//input_example.txt" , "r");
     input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
-    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w+");
     if(input_file == NULL){ //check the file was opened successfully - if not terminate
-        printf(" --- Can't open input file --- \n");
+        printf(" ---> Can't open input file/s =[ \n");
         return 0;
     }
-    printf("---------------------------------------------------------------------------------------------------------");
 
     /* -------------------- File Reading -------------------- */
+    /* Define params for reading data */
+    char* dir_id_res;
+    unsigned short depth = 0;
+    unsigned int file_size = 0;
+    char obj_type;
+    char* file_id_res;
+
     /* Go over all file systems */
     for (int i = 0; i < num_of_input_files ; ++i) {
         printf(" --- Start Reading the file --- \n");
@@ -179,10 +226,11 @@ int main(){
         do{
             fgets(buff, BUFFER_SIZE , input_file);
         } while(strlen(buff) > 1);
-        printf(" --- Skipped over the file-system data block - lets start reading the real data --- \n");
+        printf(" --- Skipped over the file-system data block successfully--- \n");
 
         /* Read File till the end - parse each block and add it to the corresponding structure */
-        while(!feof(input_file)){
+        int count = 0;
+        while(!feof(input_file) && count < 10){
             fgets(buff, BUFFER_SIZE , input_file);
             block_line_count++;
             /* Check if we have reached the end of the file, nothing more to read */
@@ -198,23 +246,35 @@ int main(){
                     /* DIRECTORY NAME */
                     case 1:
                         //only first 10 digits depict the hashed directory name
-                        case_1_directory_name(res_file_1 , buff);
+                        dir_id_res = case_1_directory_name(res_file_1 , buff);
                         break;
                     /* NAMESPACE DEPTH */
                     case 4:
-                        case_4_get_depth(res_file_1 , buff);
+                        depth = case_4_get_depth(res_file_1 , buff);
                         break;
                     /* FILE SIZE */
                     case 5:
-                        case_5_file_size(res_file_1 , buff);
+                        file_size = case_5_file_size(res_file_1 , buff);
                         break;
                     /* FILE ATTRIBUTES VALUE */
                     case 6:
-                        case_6_file_attribute(res_file_1 , buff);
+                        obj_type = case_6_file_attribute(res_file_1 , buff);
                         break;
                     /* FILE ID */
                     case 7:
-                        case_7_hash_file_id(res_file_1 , buff , i);
+                        file_id_res = case_7_hash_file_id(res_file_1 , buff , i);
+                        //Case adding into Files- HashT
+                        if (obj_type == 'F'){
+                            File temp_file = ht_set(ht_files , file_id_res ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
+                            printf("Created file with:\n");
+                            printf("file id - %s\n" , temp_file->file_id);
+                            printf("file sn - %lu\n" , temp_file->file_sn);
+                            files_sn++;
+                        }
+                        //Case adding into Directory - HashT
+//                        else{
+//                            ht_set(ht_files , dir_id_res , dir_sn, 1,  507 , 'D');
+//                        }
                         break;
                     /* Line 13 is SV */
                     case 13:

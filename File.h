@@ -62,7 +62,7 @@ typedef struct file_t *File;
  *
  */
 File file_create(char* file_id , unsigned long file_sn , unsigned int dir_sn){
-    assert(file_sn <0);
+    assert(file_sn > 0);
     File file = malloc(sizeof(*file));
     if(file == NULL){
         printf("--> allocation Failed 1\n");
@@ -96,7 +96,7 @@ File file_create(char* file_id , unsigned long file_sn , unsigned int dir_sn){
  *
  */
 void file_destroy(File file){
-    assert(!file);
+    assert(file);
 
     free(file->file_id);
     listDestroy(file->blocks_list);
@@ -107,11 +107,11 @@ void file_destroy(File file){
  *
  */
 long file_get_SN(File file){
-    assert(!file);
+    assert(file);
     return file->file_sn;
 }
 char* file_get_ID(File file){
-    assert(!file);
+    assert(file);
     return file->file_id;
 }
 

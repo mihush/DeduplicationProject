@@ -43,7 +43,7 @@ static void freeString(ListElement str){
  *                      - zeros the counter that contains the amount of files sharing this block
  */
 Block block_create(char* block_id , unsigned long block_sn , unsigned int block_size){
-    assert(block_sn < 0); //check invalid input
+    assert(block_sn > 0); //check invalid input
 
     Block block = malloc(sizeof(*block)); //create a block
     if(block == NULL){ //Check memory allocation was successful
@@ -74,7 +74,7 @@ Block block_create(char* block_id , unsigned long block_sn , unsigned int block_
  *
  */
 void block_destroy(Block block){
-    assert(!block);
+    assert(block);
 
     free(block->block_id);
     listDestroy(block->files_list);
@@ -85,7 +85,7 @@ void block_destroy(Block block){
  *
  */
 long block_get_SN(Block block){
-    assert(!block);
+    assert(block);
     return block->block_sn;
 }
 
@@ -93,7 +93,7 @@ long block_get_SN(Block block){
  *
  */
 char* block_get_ID(Block block){
-    assert(!block);
+    assert(block);
     return block->block_id;
 }
 
