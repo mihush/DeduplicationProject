@@ -20,21 +20,23 @@ struct block_info{ //helper struct
 };
 typedef struct block_info* Block_Info;
 
-static ListElement copy_block_info(ListElement block_info){ //TODO check if correct input
+static ListElement copy_block_info(ListElement block_info){
     assert(block_info);
+    Block_Info bi = (Block_Info)(block_info);
     Block_Info bi_copy = malloc(sizeof(*bi_copy));
     if(bi_copy == NULL){
         return NULL;
     }
 
-    bi_copy -> size = ((Block_Info)(block_info))->size;
-    bi_copy->id = malloc(BLOCK_ID_LEN +1);
+    bi_copy->size = bi->size;
+    bi_copy->id = malloc(sizeof(char)*(strlen(bi->id) +1));
     if(bi_copy->id == NULL){
         free(bi_copy);
         return NULL;
     }
-    strcpy(bi_copy->id , ((Block_Info)(block_info))->id);
+    strcpy(bi_copy->id , bi->id);
     return bi_copy;
+
 }
 
 static void free_block_info(ListElement block_info){
@@ -139,12 +141,14 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     }
     bi->id =  malloc(sizeof(char)*(strlen(block_id) +1));
     if(bi->id == NULL){
+        free(bi);
         return OUT_OF_MEMORY;
     }
     strcpy(bi->id , block_id);
     bi->size = block_size;
 
-    ListResult res = listInsertFirst(file->blocks_list , bi);
+    ListResult res = listInsertLast(file->blocks_list , bi);
+    printf("added block to file \n");
     if(res != LIST_SUCCESS){
         free(bi->id);
         free(bi);
@@ -152,6 +156,8 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
         return OUT_OF_MEMORY;
     }
     file->num_blocks += 1;
+    free(bi->id);
+    free(bi);
     return SUCCESS;
 }
 

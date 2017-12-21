@@ -7,6 +7,13 @@
 #include "HashTable.h"
 #include <windows.h>
 
+/************************************************** Global Params**************************************************/
+/* Serial number for counting the elements which insert to the system */
+unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
+
+/* Hash-Tables for blocks, files , directories */
+HashTable ht_files , ht_blocks , ht_dirs;
+
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
 bool check_12_z(char buff[STR_OF_Z]){
@@ -96,11 +103,12 @@ char* case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_o
 }
 
 /* Line 13 is SV */
-void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_count , bool* read_empty_line_chucnks) {
+void case_13_VS(File file_obj , FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_count , bool* read_empty_line_chucnks) {
     /* Params initialization */
     *read_empty_line_chucnks = false;
     char block_id[BLOCK_ID_LEN];
     int block_size = 0;
+    Block insert_block;
 
     fgets(buff, BUFFER_SIZE, input_file);
     (*block_line_count)++;
@@ -136,17 +144,18 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
                 //only first 12 digits are block_id
                 strncpy(block_id, buff, STR_OF_Z);
                 block_id[STR_OF_Z] = '\0';
-
                 strncpy(size, &buff[(STR_OF_Z + 1)], CHUNKE_SIZE_LEN);
             } else {
                 //only first 10 digits are block_id
                 strncpy(block_id, buff, 10);
                 block_id[CHUNKE_ID_LEN] = '\0';
-
                 strncpy(size, &buff[(CHUNKE_ID_LEN + 1)], CHUNKE_SIZE_LEN);
             }
-
             block_size = (int)strtol(size,(char **)NULL, 10);
+
+            file_add_block(file_obj , block_id , block_size);
+            ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 1, 'B');
+            blocks_sn++;
             fprintf(res_file, "--> Block  - %s - %d \n", block_id, block_size);
             fgets(buff, BUFFER_SIZE, input_file);
             (*block_line_count)++;
@@ -164,11 +173,9 @@ int main(){
     bool read_empty_line_chucnks = false;
     int block_line_count = 0;
 
-    unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
-    HashTable ht_files , ht_blocks , ht_dirs;
     ht_files = ht_create();
     ht_blocks = ht_create();
-    //ht_dirs = ht_create();
+    ht_dirs = ht_create();
     if(ht_files == NULL || ht_blocks == NULL || ht_dirs == NULL){
         printf(" ---> Failed Allocating Hashtables in parser =[ \n");
         return 0;
@@ -208,6 +215,7 @@ int main(){
     unsigned int file_size = 0;
     char obj_type;
     char* file_id_res;
+    File file_obj;
 
     /* Go over all file systems */
     for (int i = 0; i < num_of_input_files ; ++i) {
@@ -254,20 +262,21 @@ int main(){
                         file_id_res = case_7_hash_file_id(res_file_1 , buff , i);
                         //Case adding into Files- HashT
                         if (obj_type == 'F'){
-                            File temp_file = ht_set(ht_files , file_id_res , depth ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
+                            file_obj = ht_set(ht_files , file_id_res , depth ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
                             printf("Created file with:\n");
-                            printf("file id - %s\n" , temp_file->file_id);
-                            printf("file sn - %lu\n" , temp_file->file_sn);
+                            printf("file id - %s\n" , file_obj->file_id);
+                            printf("file sn - %lu\n" , file_obj->file_sn);
                             files_sn++;
                         }
                         //Case adding into Directory - HashT
 //                        else{
 //                            ht_set(ht_files , dir_id_res , dir_sn, 1,  507 , 'D');
+//                            dir_sn++;
 //                        }
                         break;
                     /* Line 13 is SV */
                     case 13:
-                        case_13_VS(res_file_1 , input_file , buff , &block_line_count , &read_empty_line_chucnks);
+                        case_13_VS(file_obj , res_file_1 , input_file , buff , &block_line_count , &read_empty_line_chucnks);
                         break;
                     default:
                         break;
@@ -284,6 +293,7 @@ int main(){
                 /* Zero the line count for the next block */
                 block_line_count = 0;
                 read_empty_line_chucnks = false;
+                file_obj = NULL;
             }
         }
     }

@@ -172,7 +172,6 @@ ListResult listInsertFirst(List list, ListElement element) {
     if (list == NULL || element == NULL) {
         return LIST_NULL_ARGUMENT;
     }
-
     //create a new node for insertion in the beginning
     Node newNode = nodeCreate(element, list->copyElement);
     if (!newNode) {
