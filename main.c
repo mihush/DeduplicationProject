@@ -56,6 +56,7 @@ unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
     return file_size;
 }
 
+
 /* FILE ATTRIBUTES VALUE */
 /*
  * Returns one from { 'D' , 'F'}
@@ -64,7 +65,7 @@ unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
  *
  */
 char case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
-    DWORD file_attribute = (int)strtol(buff,(char **)NULL, 10);
+    int file_attribute = (int)strtol(buff,(char **)NULL, 10);
     fprintf(res_file , "--> File attribute is : %d \n" , file_attribute);
 
     char res;
@@ -292,6 +293,9 @@ int main(){
     /* -------------------- File Closing -------------------- */
     fclose(input_file);
     fclose(res_file_1);
+
+    printf(" -------------- Print File Hash Table :\n");
+    print_ht_File(ht_files);
 
     return 0;
 }

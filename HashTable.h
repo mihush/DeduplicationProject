@@ -37,7 +37,6 @@ typedef struct hashtable_t *HashTable;
 HashTable ht_create() {
     HashTable ht = NULL;
 
-
     /* Allocate the table itself */
     ht = malloc(sizeof(*ht));
     if(!ht){ //check allocation was successful
@@ -170,6 +169,15 @@ Data ht_get( HashTable ht, char *key ) {
         return pair->data;
     }
 }
-
+void print_ht_File(HashTable ht){
+    for(int i = 0; i < (ht->size_table) ; i++ ){
+        Entry pair = ht->table[i];
+        /* Step through the hash_key, looking for our value. */
+        while( pair != NULL && pair->key != NULL) {
+            printf("Key : %s \n SN : %lu \n" , pair->key , ((File)(pair->data))->file_sn);
+            pair = pair->next;
+        }
+    }
+}
 
 #endif //DEDUPLICATION_PROJ_HASHTABLE_H
