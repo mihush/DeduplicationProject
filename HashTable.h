@@ -15,34 +15,37 @@
 struct entry_s {
     char *key;
     char *value;
-    struct entry_s *next;
+    struct entry_s *next; //Chain-hashing solution. ptr to the next element
 };
 
 typedef struct entry_s entry_t;
 
-struct hashtable_s {
-    int size;
+struct hashtable_t {
+    long size_table;
+    int num_of_elements;
     struct entry_s **table;
 };
 
-typedef struct hashtable_s hashtable_t;
+typedef struct hashtable_t HashTable;
 
 
-/* Create a new hashtable. */
-hashtable_t *ht_create( int size ) {
+/* Create a new HashTable. */
+HashTable *ht_create( long size ) {
 
-    hashtable_t *hashtable = NULL;
-    int i;
+    HashTable *hashtable = NULL;
+    int i=0;
 
     if( size < 1 ) return NULL;
 
-    /* Allocate the table itself. */
-    if( ( hashtable = malloc( sizeof( hashtable_t ) ) ) == NULL ) {
+    /* Allocate the table itself */
+    hashtable = malloc( sizeof( HashTable ));
+    if( !hashtable) {
         return NULL;
     }
 
-    /* Allocate pointers to the head nodes. */
-    if( ( hashtable->table = malloc( sizeof( entry_t * ) * size ) ) == NULL ) {
+    /* Allocate pointers to the head nodes */
+    hashtable->table = malloc( sizeof( entry_t * ) * size );
+    if(!hashtable->table ) {
         return NULL;
     }
     for( i = 0; i < size; i++ ) {
@@ -50,12 +53,11 @@ hashtable_t *ht_create( int size ) {
     }
 
     hashtable->size = size;
-
     return hashtable;
 }
 
 /* Hash a string for a particular hash table. */
-int ht_hash( hashtable_t *hashtable, char *key ) {
+int ht_hash( HashTable *hashtable, char *key ) {
 
     unsigned long int hashval;
     int i = 0;
@@ -92,7 +94,7 @@ entry_t *ht_newpair( char *key, char *value ) {
 }
 
 /* Insert a key-value pair into a hash table. */
-void ht_set( hashtable_t *hashtable, char *key, char *value ) {
+void ht_set( HashTable *hashtable, char *key, char *value ) {
     int bin = 0;
     entry_t *newpair = NULL;
     entry_t *next = NULL;
@@ -135,7 +137,7 @@ void ht_set( hashtable_t *hashtable, char *key, char *value ) {
 }
 
 /* Retrieve a key-value pair from a hash table. */
-char *ht_get( hashtable_t *hashtable, char *key ) {
+char *ht_get( HashTable *hashtable, char *key ) {
     int bin = 0;
     entry_t *pair;
 
