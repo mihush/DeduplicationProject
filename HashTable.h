@@ -13,6 +13,7 @@
 #include "Block.h"
 #include "File.h"
 #include "List.h"
+#include "Directory.h"
 
 #define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
@@ -94,7 +95,11 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
 
     if(flag == 'B'){ // save the data object
         newpair->data = block_create(key , sn, size);
-    }else{ //This is a file objec
+    }else if( flag == 'D'){
+        printf("Im so excitedddd !!!\n");
+        newpair->data = dir_create(key , depth , sn , dir_sn);
+    }
+    else{ //This is a file objec
         newpair->data = file_create(key , depth , sn , dir_sn);
     }
     if(newpair->data == NULL) {
@@ -116,7 +121,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
     next = ht->table[hash_key];
 
     /* Advance until get the end of the list OR first matching key*/
-    while( next != NULL && next->key != NULL && strcmp( key, next->key ) > 0 ) {
+    while( next != NULL && next->key != NULL && strcmp( key, next->key ) != 0 ) {
         last = next;
         next = next->next;
     }
@@ -132,7 +137,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
             return NULL;
         }
         /* We're at the start of the linked list in this hash_key. */
-        if( next == ht->table[hash_key] ){ //First element list
+        if( next == ht->table[hash_key] ){ // If we in an empty list
             newpair->next = next;
             ht->table[hash_key] = newpair;
 
@@ -141,8 +146,6 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
             last->next = newpair;
 
         } else  { /* We're in the middle of the list. */
-            //Shouldn't really happen
-            //printf("--> Errorrrrrrrrrrrrrrrrrrr\n");
             newpair->next = next;
             last->next = newpair;
         }
@@ -156,7 +159,7 @@ Data ht_get( HashTable ht, char *key ) {
     Entry pair = ht->table[hash_key];
 
     /* Step through the hash_key, looking for our value. */
-    while( pair != NULL && pair->key != NULL && strcmp( key, pair->key ) > 0 ) {
+    while( pair != NULL && pair->key != NULL && strcmp( key, pair->key ) != 0 ) {
         pair = pair->next;
     }
 

@@ -14,6 +14,9 @@ unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
 /* Hash-Tables for blocks, files , directories */
 HashTable ht_files , ht_blocks , ht_dirs;
 
+/* Root Directory */
+Dir root_directory;
+
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
 bool check_12_z(char buff[STR_OF_Z]){
@@ -210,12 +213,13 @@ int main(){
 
     /* -------------------- File Reading -------------------- */
     /* Define params for reading data */
-    char* dir_id_res;
+    char* parent_dir_id;
     unsigned short depth = 0;
     unsigned int file_size = 0;
     char obj_type;
-    char* file_id_res;
+    char* object_id;
     File file_obj;
+    Dir dir_obj;
 
     /* Go over all file systems */
     for (int i = 0; i < num_of_input_files ; ++i) {
@@ -243,7 +247,7 @@ int main(){
                     /* DIRECTORY NAME */
                     case 1:
                         //only first 10 digits depict the hashed directory name
-                        dir_id_res = case_1_directory_name(res_file_1 , buff);
+                        parent_dir_id = case_1_directory_name(res_file_1 , buff);
                         break;
                     /* NAMESPACE DEPTH */
                     case 4:
@@ -259,20 +263,36 @@ int main(){
                         break;
                     /* FILE ID */
                     case 7:
-                        file_id_res = case_7_hash_file_id(res_file_1 , buff , i);
+                        object_id = case_7_hash_file_id(res_file_1 , buff , i);
                         //Case adding into Files- HashT
                         if (obj_type == 'F'){
-                            file_obj = ht_set(ht_files , file_id_res , depth ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
+                            file_obj = ht_set(ht_files , object_id , depth ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
                             printf("Created file with:\n");
                             printf("file id - %s\n" , file_obj->file_id);
                             printf("file sn - %lu\n" , file_obj->file_sn);
                             files_sn++;
                         }
                         //Case adding into Directory - HashT
-//                        else{
-//                            ht_set(ht_files , dir_id_res , dir_sn, 1,  507 , 'D');
-//                            dir_sn++;
-//                        }
+                        else if(obj_type == 'D'){
+                            if( dir_sn == 1){
+                                root_directory = ht_set(ht_dirs , parent_dir_id, 0 , dir_sn , 1 , 0 , 'D');
+                                printf("Root Dir created\n");
+                                printf("dir id: %s\n" , root_directory->dir_id);
+                                printf("dir sn: %lu\n", root_directory->dir_sn);
+                                dir_sn++;
+                             }
+                            Dir temp_dir = (Dir)ht_get(ht_dirs, parent_dir_id);
+                            if (temp_dir == NULL) {
+                                printf("Parent_dir error !\n");
+                            }
+                            unsigned int parent_dir_sn = temp_dir->dir_sn;
+                            dir_obj = ht_set(ht_dirs, object_id, depth, dir_sn, 1, parent_dir_sn, 'D');
+                            printf("Created dir with:\n");
+                            printf("dir id: %s\n", dir_obj->dir_id);
+                            printf("parent dir_sn: %lu\n" , dir_obj->parent_dir_sn);
+                            printf("dir sn: %lu\n", dir_obj->dir_sn);
+                            dir_sn++;
+                        }
                         break;
                     /* Line 13 is SV */
                     case 13:

@@ -30,13 +30,13 @@ typedef struct dir_t *Dir;
 /********************************* List Functions ******************************** */
 static ListElement copy_directory_info(ListElement directory_info){
     assert(directory_info);
+    unsigned long* sn = (unsigned long*)(directory_info);
     unsigned long* sn_copy = malloc(sizeof(*sn_copy));
     if(!sn_copy){
         printf("---> allocation faild at list_element copy_func\n");
         return NULL;
     }
-
-    *sn_copy = *directory_info;
+    *sn_copy = *sn;
     return sn_copy;
 }
 
@@ -47,7 +47,7 @@ static  void free_dir_info(ListElement dir_info){
 /******************************* Function of Directory Struct *****************************/
 /* Creating a Directory struct */
 Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , unsigned long parent_dir_sn){
-    assert(dir_sn < 0);
+    assert(dir_sn >= 0);
     Dir dir = malloc(sizeof(*dir));
     if(dir == NULL){
         printf(" ----> Failed allocating dir 1\n");
