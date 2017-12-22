@@ -240,11 +240,11 @@ int main(){
     /* -------------------- File Opening -------------------- */
     printf(" --- Opening File --- \n");
     /* michal files addresses */
-    input_file = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\input_example.txt" , "r");
-    res_file_1 = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\res_file_1.txt" , "w");
+    //input_file = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\input_example.txt" , "r");
+    //res_file_1 = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\res_file_1.txt" , "w");
     /* Polina files addresses */
-    //input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
-    //res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+    input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
+    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
 
     if(input_file == NULL){ //check the file was opened successfully - if not terminate
         printf(" ---> Can't open input file/s =[ \n");
@@ -305,12 +305,6 @@ int main(){
 
                     case 7:
                         object_id = case_7_hash_file_id(res_file_1 , buff , i);
-                        // Extract the dir_sn according to dir_id
-                        Dir temp_dir = (Dir)ht_get(ht_dirs, parent_dir_id);
-                        if (temp_dir == NULL) {
-                            printf("Parent_dir error !\n");
-                        }
-                        unsigned int parent_dir_sn = temp_dir->dir_sn;
 
                         //Case adding into Files- HashT
                         if (obj_type == 'F'){
@@ -329,6 +323,13 @@ int main(){
                                 printf("dir sn: %lu\n", root_directory->dir_sn);
                                 dir_sn++;
                              }
+                            // Extract the dir_sn according to dir_id
+                            Dir temp_dir = (Dir)ht_get(ht_dirs, parent_dir_id);
+                            if (temp_dir == NULL) {
+                                printf("Parent_dir error !\n");
+                            }
+                            unsigned int parent_dir_sn = temp_dir->dir_sn;
+
                             dir_obj = ht_set(ht_dirs, object_id, depth, dir_sn, 1, parent_dir_sn, 'D');
                             printf("Created dir with:\n");
                             printf("dir id: %s\n", dir_obj->dir_id);
