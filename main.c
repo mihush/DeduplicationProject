@@ -28,6 +28,38 @@ bool check_12_z(char buff[STR_OF_Z]){
     return true;
 }
 
+char* getHex(int flag){
+    char* hex = malloc(sizeof(char)*11);
+    int i=0;
+    while (flag){
+        hex[i++] = (flag%16)+'0';
+        flag/=16;
+    }
+    return hex;
+}
+
+char *intToHex(unsigned input)
+{
+    char *output = malloc(sizeof(unsigned) * 2 + 3);
+    strcpy(output, "0x00000000");
+
+    static char HEX_ARRAY[] = "0123456789ABCDEF";
+    //Initialization of 'converted' object
+
+    // represents the end of the string.
+    int index = 9;
+
+    while (input > 0 )
+    {
+        output[index--] = HEX_ARRAY[(input & 0xF)];
+        //Prepend (HEX_ARRAY[n & 0xF]) char to converted;
+        input >>= 4;
+    }
+
+    return output;
+}
+
+
 /********************************* Parsing Functions ************************************/
 /*
  *  Extract fields from input file.
@@ -77,15 +109,19 @@ unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
 char case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
     int file_attribute = (int)strtol(buff,(char **)NULL, 10);
     fprintf(res_file , "--> File attribute is : %d \n" , file_attribute);
-
     char res;
-    if ( FILE_ATTRIBUTE_ARCHIVE & file_attribute){
-        fprintf(res_file , "---> The object is a File \n"  );
+//    char* int_in_hex = intToHex(file_attribute);
+//    printf("-----------------\n");
+//    printf("the file attribute is: %d\n" , file_attribute);
+//    printf("the hex is : %s\n" , int_in_hex);
+    if ( FILE_ATTRIBUTE_ARCHIVE & file_attribute) {
+        fprintf(res_file, "---> The object is a File \n");
         res = 'F';
-    }else if((FILE_ATTRIBUTE_DIRECTORY & file_attribute)){
-        fprintf(res_file , "---> The object is a Directory\n");
-        res = 'D';
     }
+//    }else if((FILE_ATTRIBUTE_DIRECTORY & file_attribute)){
+//        fprintf(res_file , "---> The object is a Directory\n");
+//        res = 'D';
+//    }
     return res;
 }
 
@@ -203,9 +239,13 @@ int main(){
 
     /* -------------------- File Opening -------------------- */
     printf(" --- Opening File --- \n");
-    // Input_file = fopen("//home//mihuahams//project_files//input_example.txt" , "r");
-    input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
-    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+    /* michal files addresses */
+    input_file = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\input_example.txt" , "r");
+    res_file_1 = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\res_file_1.txt" , "w");
+    /* Polina files addresses */
+    //input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
+    //res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+
     if(input_file == NULL){ //check the file was opened successfully - if not terminate
         printf(" ---> Can't open input file/s =[ \n");
         return 0;
@@ -264,9 +304,16 @@ int main(){
                     /* FILE ID */
                     case 7:
                         object_id = case_7_hash_file_id(res_file_1 , buff , i);
+                        // Extract the dir_sn according to dir_id
+                        Dir temp_dir = (Dir)ht_get(ht_dirs, parent_dir_id);
+                        if (temp_dir == NULL) {
+                            printf("Parent_dir error !\n");
+                        }
+                        unsigned int parent_dir_sn = temp_dir->dir_sn;
+
                         //Case adding into Files- HashT
                         if (obj_type == 'F'){
-                            file_obj = ht_set(ht_files , object_id , depth ,files_sn , 1, 507 ,'F');//TODO Find the current dir_sn from hash_t
+                            file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size, 507 ,'F');//TODO Find the current dir_sn from hash_t
                             printf("Created file with:\n");
                             printf("file id - %s\n" , file_obj->file_id);
                             printf("file sn - %lu\n" , file_obj->file_sn);
@@ -281,11 +328,6 @@ int main(){
                                 printf("dir sn: %lu\n", root_directory->dir_sn);
                                 dir_sn++;
                              }
-                            Dir temp_dir = (Dir)ht_get(ht_dirs, parent_dir_id);
-                            if (temp_dir == NULL) {
-                                printf("Parent_dir error !\n");
-                            }
-                            unsigned int parent_dir_sn = temp_dir->dir_sn;
                             dir_obj = ht_set(ht_dirs, object_id, depth, dir_sn, 1, parent_dir_sn, 'D');
                             printf("Created dir with:\n");
                             printf("dir id: %s\n", dir_obj->dir_id);
@@ -314,6 +356,7 @@ int main(){
                 block_line_count = 0;
                 read_empty_line_chucnks = false;
                 file_obj = NULL;
+                dir_obj = NULL;
             }
         }
     }

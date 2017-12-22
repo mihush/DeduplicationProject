@@ -54,6 +54,7 @@ struct file_t{
     unsigned int file_depth; // the high in depot tree
     unsigned int dir_sn; //Serial number of the directory containing this file
     int num_blocks; //number of blocks contained in this file
+    unsigned int file_size; //size of the file
     List blocks_list; // list of block_info objects contained in this file
 };
 typedef struct file_t *File;
@@ -64,7 +65,7 @@ typedef struct file_t *File;
 /*
  *
  */
-File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int dir_sn){
+File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int dir_sn , unsigned int size){
     assert(file_sn > 0);
     File file = malloc(sizeof(*file));
     if(file == NULL){
@@ -84,6 +85,7 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
     file->dir_sn = dir_sn;
     file->num_blocks = 0;
     file->file_depth = depth;
+    file->file_size = size;
 
     file->blocks_list = listCreate(copy_block_info , free_block_info);
     if(file->blocks_list == NULL){

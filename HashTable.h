@@ -100,7 +100,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
         newpair->data = dir_create(key , depth , sn , dir_sn);
     }
     else{ //This is a file objec
-        newpair->data = file_create(key , depth , sn , dir_sn);
+        newpair->data = file_create(key , depth , sn , dir_sn , size);
     }
     if(newpair->data == NULL) {
         free(newpair->key);
@@ -180,10 +180,11 @@ void print_ht_File(HashTable ht){
         /* Step through the hash_key, looking for our value. */
         while( pair != NULL && pair->key != NULL) {
             printf("Key : %s \n SN : %lu \n" , pair->key , ((File)(pair->data))->file_sn);
+            printf("Num of blocks: %d \n " , ((File)(pair->data))->num_blocks);
             printf("The file contains the following blocks:\n");
             Block_Info iter = listGetFirst(((File)(pair->data))->blocks_list);
-            if(iter == NULL){
-                printf(" WTF - are you doing\n");
+            if(iter == NULL && (((File)(pair->data))->num_blocks > 0) ){
+                printf(" This file has no blocks - ooooppppsss!\n");
             }
 
             LIST_FOREACH(Block_Info, iter, ((File)(pair->data))->blocks_list) {
