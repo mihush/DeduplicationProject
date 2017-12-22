@@ -330,6 +330,7 @@ int main(){
                             }
                             unsigned int parent_dir_sn = temp_dir->dir_sn;
 
+
                             dir_obj = ht_set(ht_dirs, object_id, depth, dir_sn, 1, parent_dir_sn, 'D');
                             printf("Created dir with:\n");
                             printf("dir id: %s\n", dir_obj->dir_id);
