@@ -262,6 +262,7 @@ int main(){
                         obj_type = case_6_file_attribute(res_file_1 , buff);
                         break;
                     /* FILE ID */
+
                     case 7:
                         object_id = case_7_hash_file_id(res_file_1 , buff , i);
                         //Case adding into Files- HashT
