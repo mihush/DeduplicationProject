@@ -5,6 +5,7 @@
 #ifndef DEDUPLICATION_PROJ_HASHTABLE_H
 #define DEDUPLICATION_PROJ_HASHTABLE_H
 
+/* *************** START ************** HashTable Definition *************** START *************** */
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -17,9 +18,12 @@
 
 #define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
+//TODO Set Correct Sizes
+#define BLOCKS_INIT_SIZE 5007
+#define FILES_INIT_SIZE 5007
+#define DIRS_INIT_SIZE 5007
 typedef void* Data;
 
-/* ------------------------------------------------------------------------------- */
 struct entry_t {
     char *key;
     Data data;
@@ -33,25 +37,41 @@ struct hashtable_t {
     Entry *table; // array of pointers to Entries
 };
 typedef struct hashtable_t *HashTable;
-/* ------------------------------------------------------------------------------- */
 
+/* **************** END *************** HashTable Definition **************** END **************** */
+/* *********************************************************************************************** */
+/* *********************************************************************************************** */
+/* *************** START ************** HashTable Functions *************** START **************** */
 /* Create a new HashTable. */
-HashTable ht_create() {
+HashTable ht_create(char type) {
     HashTable ht = NULL;
 
     /* Allocate the table itself */
     ht = malloc(sizeof(*ht));
     if(!ht){ //check allocation was successful
-        printf("Allocation of ht object FAILED !!\n");
+        printf("(HashTable)--> Creating HashTable - Allocation Error (1) \n");
         return NULL;
     }
-    ht->size_table = INIT_SIZE;
+    switch(type){
+        case 'B':
+            ht->size_table = BLOCKS_INIT_SIZE;
+            break;
+        case 'F':
+            ht->size_table = FILES_INIT_SIZE;
+            break;
+        case 'D':
+            ht->size_table = DIRS_INIT_SIZE;
+            break;
+        default:
+            ht->size_table = INIT_SIZE; //Shouldn't really get here
+            break;
+    }
     ht->num_of_elements = 0;
 
     /* Allocate pointers to the head nodes */
     ht -> table = malloc(sizeof(Entry) * (ht->size_table));
     if(!ht -> table ){ //check array od pointers was allocated successfully
-        printf("Allocation of hashtable array FAILED !!!!\n");
+        printf("(HashTable)--> Creating HashTable - Allocation Error (2) \n");
         free(ht);
         return NULL;
     }
@@ -59,11 +79,13 @@ HashTable ht_create() {
     for(int i = 0; i < (ht->size_table) ; i++ ){
         ht->table[i] = NULL;
     }
-
+    printf("(HashTable)--> Created HashTable Sucessfully of size %d \n" , ht->size_table);
     return ht;
 }
 
-/* Hash a string for a particular hash table. */
+/*
+ * ht_hash - Given a key (string) Generates a Hash Value by which it will be stored in the table
+ */
 long int ht_hash( HashTable ht, char *key ) {
     unsigned long int hashval;
     int i = 0;
@@ -78,31 +100,39 @@ long int ht_hash( HashTable ht, char *key ) {
     return hashval % (ht->size_table);
 }
 
-/* Create a key-value pair */
-//For block - size parameter will contain the block size
-//For File - size parameter will be -1
-Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag){
+/*
+ * ht_newpair - Creates a key-value pair
+ *                  - For block - size parameter will contain the block size
+ *                  - For File - size parameter will be -1
+ */
+Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag){
     Entry newpair  = malloc(sizeof(*newpair));
     if(newpair == NULL){
+        printf("(HashTable)--> Creating new pair - Allocation Error (1) \n");
         return NULL;
     }
 
     newpair->key = strdup(key);
     if(newpair->key == NULL){
+        printf("(HashTable)--> Creating new pair - Allocation Error (2) \n");
         free(newpair);
         return NULL;
     }
 
     if(flag == 'B'){ // save the data object
+        printf("(HashTable)--> Creating new pair - BLOCK \n");
         newpair->data = block_create(key , sn, size);
     }else if( flag == 'D'){
-        printf("Im so excitedddd !!!\n");
-        newpair->data = dir_create(key , depth , sn , dir_sn);
+        printf("(HashTable)--> Creating new pair - DIRECTORY \n");
+        newpair->data = dir_create(key , depth , sn);
     }
-    else{ //This is a file objec
-        newpair->data = file_create(key , depth , sn , dir_sn , size);
+    else{ //This is a file object
+        printf("(HashTable)--> Creating new pair - FILE \n");
+        newpair->data = file_create(key , depth , sn , size);
     }
+
     if(newpair->data == NULL) {
+        printf("(HashTable)--> Failed to allocate new pair \n");
         free(newpair->key);
         free(newpair);
         return NULL;
@@ -111,8 +141,10 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     return newpair;
 }
 
-/* Insert a key-value pair into a hash table. */
-Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size ,unsigned int dir_sn , char flag) {
+/*
+ * ht_set - Insert a key-value pair into a hash table.
+ */
+Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag) {
     Entry newpair = NULL;
     Entry next = NULL;
     Entry last = NULL;
@@ -131,9 +163,9 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
         //Return the pointer to the Block/File that already exists in the hash
         return next->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
-        newpair = ht_newpair(key, depth , sn, size, dir_sn, flag ); //allocate new pair
+        newpair = ht_newpair(key, depth , sn, size, flag ); //allocate new pair
         if(newpair == NULL){
-            printf(" --> Allocation Error in adding new value to hash\n");
+            printf("(HashTable)--> Adding Pair to HT - Allocation Error (1) \n");
             return NULL;
         }
         /* We're at the start of the linked list in this hash_key. */
@@ -153,7 +185,9 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
     }
 }
 
-/* Retrieve pointer for block/file element with corresponding key in hash table. */
+/*
+ * ht_get - Retrieve pointer for block/file element with corresponding key in hash table.
+ */
 Data ht_get( HashTable ht, char *key ) {
     long int hash_key = ht_hash(ht, key);
     Entry pair = ht->table[hash_key];
@@ -168,13 +202,13 @@ Data ht_get( HashTable ht, char *key ) {
         //didn't find anything
         return NULL;
 
-    } else {
-        //found the key - return the data
-        return pair->data;
     }
+    //found the key - return the data
+    return pair->data;
 }
 
 void print_ht_File(HashTable ht){
+    printf("Printing HashTable: \n");
     for(int i = 0; i < (ht->size_table) ; i++ ){
         Entry pair = ht->table[i];
         /* Step through the hash_key, looking for our value. */
@@ -194,5 +228,7 @@ void print_ht_File(HashTable ht){
         }
     }
 }
+
+/* **************** END *************** HashTable Functions **************** END ***************** */
 
 #endif //DEDUPLICATION_PROJ_HASHTABLE_H

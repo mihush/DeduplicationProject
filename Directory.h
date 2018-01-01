@@ -13,8 +13,18 @@
 #include <string.h>
 #include <assert.h>
 
-/* *************** START ************** File STRUCT Definition *************** START *************** */
-
+/* *************** START ************** Directory STRUCT Definition *************** START *************** */
+/*
+ * Definition of a Directory structure:
+ *                  - dir_sn -> a running index on all directories read from the file system
+ *                  - dir_id -> a hushed id as appears in the input file
+ *                  - parent_dir_sn -> the sn of the parent directory in the hierarchy
+ *                  - dir_depth -> the depth of the directory in the hierarchical tree
+ *                  - num_of_subdirs -> number of sub directories
+ *                  - num_of_files -> number of files contained in the directory
+ *                  - dirs_list -> list of directory sn contained in this directory
+ *                  - files_list -> list of file sn contained in this directory
+ */
 struct dir_t{
     unsigned long dir_sn;
     char* dir_id;
@@ -27,13 +37,13 @@ struct dir_t{
 };
 typedef struct dir_t *Dir;
 
-/********************************* List Functions ******************************** */
+
 static ListElement copy_directory_info(ListElement directory_info){
     assert(directory_info);
     unsigned long* sn = (unsigned long*)(directory_info);
     unsigned long* sn_copy = malloc(sizeof(*sn_copy));
     if(!sn_copy){
-        printf("---> allocation faild at list_element copy_func\n");
+        printf("---> allocation failed at list_element copy_func\n");
         return NULL;
     }
     *sn_copy = *sn;
@@ -44,18 +54,28 @@ static  void free_dir_info(ListElement dir_info){
     free(dir_info);
 }
 
-/******************************* Function of Directory Struct *****************************/
-/* Creating a Directory struct */
-Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , unsigned long parent_dir_sn){
+
+/* **************** END *************** Directory STRUCT Definition **************** END **************** */
+/* ****************************************************************************************************** */
+/* ****************************************************************************************************** */
+/* *************** START *************** Directory STRUCT Functions *************** START *************** */
+
+/*
+ * dir_create - Creates a new Directory object with:
+ *                      - dir_id
+ *                      - dir_sn
+ *                      - depth
+ */
+Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
     assert(dir_sn >= 0);
     Dir dir = malloc(sizeof(*dir));
     if(dir == NULL){
-        printf(" ----> Failed allocating dir 1\n");
+        printf("(Directory)--> Creating Directory - Allocation Error (1) \n");
         return NULL;
     }
     dir->dir_id = malloc((sizeof(char)*DIR_NAME_LEN));
     if(!(dir->dir_id)){
-        printf(" ----> Failed allocating dir_id\n");
+        printf("(Directory)--> Creating Directory - Allocation Error (2) \n");
         free(dir);
         return NULL;
     }
@@ -64,41 +84,55 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , unsign
     dir->dir_sn = dir_sn;
     dir->num_of_files = 0;
     dir->num_of_subdirs = 0;
-    dir->parent_dir_sn = parent_dir_sn;
+    dir->parent_dir_sn = 0; //  not known in the time of creation
     dir->dirs_list = listCreate(copy_directory_info , free_dir_info);
     dir->files_list = listCreate(copy_directory_info , free_dir_info);
 
     if((!dir->files_list) || (!dir->dirs_list)){
-        printf(" ----> Failed allocating lists of directory\n");
+        printf("(Directory)--> Creating Directory - Allocation Error (3) \n");
         free(dir->dir_id);
         free(dir);
         return NULL;
     }
+
+    printf("(Directory)--> Created Directory Sucessfully:\n");
+    printf("              - SN    : %d \n" , dir->dir_sn);
+    printf("              - ID    : %s \n" , dir->dir_id);
+    printf("              - Depth : %d \n" , dir->dir_depth);
     return dir;
 }
 
-/* Destroy struct of Directory */
+/*
+ * dir_destroy - Destroy struct of Directory
+ */
 void dir_destroy(Dir dir){
     assert(dir);
     free(dir->dir_id);
     listDestroy(dir->dirs_list);
     listDestroy(dir->files_list);
     free(dir);
+    printf("(Directory)--> Destroyed Directory Sucessfully \n");
 }
 
-/* Return the sn of directory */
+/*
+ * dir_get_SN - Return the sn of directory
+ */
 unsigned long dir_get_SN(Dir dir){
     assert(dir);
     return dir->dir_sn;
 }
 
-/* Return the ID of directory */
+/*
+ * dir_get_ID - Return the ID of directory
+ */
 char* dir_get_ID(Dir dir){
     assert(dir);
     return dir->dir_id;
 }
 
-/* Return the depth of the directory*/
+/*
+ * dir_get_depth - Return the depth of the directory
+ */
 unsigned int dir_get_depth(Dir dir){
     assert(dir);
     return dir->dir_depth;
@@ -111,18 +145,21 @@ ErrorCode dir_add_file(Dir dir , unsigned int file_sn){
     }
     unsigned int* temp = malloc(sizeof(*temp));
     if(!temp){
+        printf("(Directory)--> Adding file to Directory - Allocation Error (1) \n");
         return OUT_OF_MEMORY;
     }
     *temp = file_sn;
     ListResult res = listInsertFirst(dir->files_list , temp);
     if(res != LIST_SUCCESS){
         free(temp);
-        printf("--->Allocation error while insert a file into directory");
+        printf("(Directory)--> Adding file to Directory - Allocation Error (2) \n");
         return OUT_OF_MEMORY;
 
     }
     dir->num_of_files += 1;
-
+    printf("(Directory)--> File was added to Directory Sucessfully:\n");
+    printf("            - File  SN     : %s \n" , file_sn);
+    printf("            - Directory SN : %s \n" , dir->dir_sn);
     return SUCCESS;
 }
 
@@ -133,17 +170,22 @@ ErrorCode dir_add_sub_dir(Dir dir , unsigned int dir_sn){
     }
     unsigned int* temp = malloc(sizeof(*temp));
     if(!temp){
+        printf("(Directory)--> Adding sub directory to Directory - Allocation Error (1) \n");
         return OUT_OF_MEMORY;
     }
     *temp = dir_sn;
     ListResult res = listInsertFirst(dir->files_list , temp);
     if(res != LIST_SUCCESS){
         free(temp);
-        printf("--->Allocation error while insert a sub_sir into directory");
+        printf("(Directory)--> Adding sub directory to Directory - Allocation Error (2) \n");
         return OUT_OF_MEMORY;
     }
     dir->num_of_subdirs += 1;
-
+    printf("(Directory)--> Directory was added to Parent Directory Sucessfully:\n");
+    printf("            - Directory  SN : %s \n" , dir_sn);
+    printf("            - Parent Dir SN : %s \n" , dir->dir_sn);
     return SUCCESS;
 }
+/* **************** END **************** Directory STRUCT Functions **************** END **************** */
+
 #endif //DEDUPLICATIONPROJECT_DIRECTORY_H
