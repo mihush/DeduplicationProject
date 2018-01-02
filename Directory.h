@@ -101,7 +101,11 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
     printf("              - Depth : %d \n" , dir->dir_depth);
     return dir;
 }
-
+ErrorCode dir_set_parent_dir_sn(Dir dir , unsigned long sn){
+    assert(dir);
+    dir->parent_dir_sn = sn;
+    return SUCCESS;
+}
 /*
  * dir_destroy - Destroy struct of Directory
  */

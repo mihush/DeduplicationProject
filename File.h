@@ -70,7 +70,7 @@ struct file_t{
     unsigned long file_sn;
     char* file_id;
     unsigned int file_depth;
-    unsigned int dir_sn;
+    unsigned long dir_sn;
     int num_blocks;
     unsigned int file_size;
     List blocks_list;
@@ -162,7 +162,7 @@ unsigned int file_get_depth(File file){
     return file->file_depth;
 }
 
-ErrorCode file_set_parent_dir_sn(File file , unsigned int dir_sn){
+ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
     assert(file);
     file->dir_sn = dir_sn;
     return SUCCESS;
