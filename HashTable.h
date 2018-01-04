@@ -79,7 +79,7 @@ HashTable ht_create(char type) {
     for(int i = 0; i < (ht->size_table) ; i++ ){
         ht->table[i] = NULL;
     }
-    printf("(HashTable)--> Created HashTable Sucessfully of size %d \n" , ht->size_table);
+    printf("(HashTable)--> Created HashTable Successfully of size %lu \n" , ht->size_table);
     return ht;
 }
 
@@ -112,13 +112,15 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
         return NULL;
     }
 
-    newpair->key = strdup(key);
+    //newpair->key = strdup(key);
+    newpair->key = malloc(sizeof(char)*(strlen(key)+1));
     if(newpair->key == NULL){
         printf("(HashTable)--> Creating new pair - Allocation Error (2) \n");
         free(newpair);
         return NULL;
     }
-
+    strcpy(newpair->key , key)
+            ;
     if(flag == 'B'){ // save the data object
         printf("(HashTable)--> Creating new pair - BLOCK \n");
         newpair->data = block_create(key , sn, size);

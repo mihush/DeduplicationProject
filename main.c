@@ -2,6 +2,11 @@
 
 #include "HashTable.h"
 #include "Utilities.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
 
 /************************************************** Global Params**************************************************/
@@ -105,8 +110,8 @@ char* case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_o
     file_id[1] = '_';
     strncpy((file_id + 2) , buff , strlen(buff) - 1);
     file_id[strlen(buff) + 2] = '\0';
-    fprintf(res_file , "(Parser) --> BUFFER LEN IS : %d \n" , strlen(buff));
-    printf("(Parser) --> BUFFER LEN IS : %d \n" , strlen(buff));
+    fprintf(res_file , "(Parser) --> BUFFER LEN IS : %d \n" , (int)strlen(buff));
+    printf("(Parser) --> BUFFER LEN IS : %d \n" , (int)strlen(buff));
     fprintf(res_file , "(Parser) --> File id is: %s \n" , file_id);
     return file_id;
 }
@@ -179,25 +184,27 @@ void case_13_VS(File file_obj , FILE* res_file , FILE *input_file , char buff[BU
 void update_parent_dir_sn(FILE* res_file, List previous , List current , int global_depth){
     File temp_file;
     Dir temp_dir;
-    printf("(update_parent_dir_sn) -->  Updating Parent directory serial numbers ..... \n");
-    fprintf(res_file , "(update_parent_dir_sn) -->  Updating Parent directory serial numbers ..... \n");
+    Object_Info temp_oi;
+    printf("(update_parent_dir_sn) -->  Updating Parent directory serial numbers in depth %d ..... \n" , global_depth);
+    fprintf(res_file , "(update_parent_dir_sn) -->  Updating Parent directory serial numbers in depth %d ..... \n" , global_depth);
     if(global_depth == 0){ //We are at root Level directory just set everyone to be the children of root
         unsigned long root_sn = root_directory->dir_sn;
-
+        printf("(update_parent_dir_sn) --> First Level - Root is parent %lu ..... \n" , root_sn);
+        fprintf(res_file , "(update_parent_dir_sn) --> First Level - Root is parent %lu ..... \n" , root_sn);
         LIST_FOREACH(Object_Info , iter ,current){
             if(iter->object_type == 'F'){
                 temp_file = (File)(ht_get(ht_files , iter->object_id));
                 assert(temp_file);
                 file_set_parent_dir_sn(temp_file ,root_sn);
-                fprintf(res_file , " Parent_sn - curr_file_id : %d - %s\n",temp_file->dir_sn , temp_file->file_id);
             } else{
                 temp_dir = (Dir)(ht_get(ht_dirs , iter->object_id));
                 assert(temp_dir);
                 dir_set_parent_dir_sn(temp_dir , root_sn);
-                fprintf(res_file , " Parent_sn - curr_file_id : %d - %s\n",temp_dir->parent_dir_sn , temp_dir->dir_id);
             }
         }
+        temp_oi = listGetFirst(current);//Just in order to reset the iterator of the current list to the beginning
     }else{ //Go over both lists and update accordingly
+        /*
         //Create Previous Depth CSV File
         printf("(update_parent_dir_sn) -->  Creating Previous Depth CSV file for depth %d  ..... \n" , global_depth);
         fprintf(res_file , "(update_parent_dir_sn) -->  Creating Previous Depth CSV file for depth %d  ..... \n" , global_depth);
@@ -207,12 +214,11 @@ void update_parent_dir_sn(FILE* res_file, List previous , List current , int glo
         prev_depth_fp = fopen(fileName , "w+");
         fprintf(prev_depth_fp ,"Object ID, Object SN, Parent Dir ID, Object Type\n");
         LIST_FOREACH(Object_Info , iter ,previous){
-            fprintf(prev_depth_fp ,"%s, %d , %s, %c\n" ,
+            fprintf(prev_depth_fp ,"%s, %lu , %s, %c\n" ,
                     iter->object_id , iter->object_sn , iter->parent_dir_id , iter->object_type);
         }
         fclose(prev_depth_fp);
-
-
+        temp_oi = listGetFirst(previous);//Just in order to reset the iterator of the current list to the beginning
         //Create Current Depth CSV File
         printf("(update_parent_dir_sn) -->  Creating Current Depth CSV file for depth %d  ..... \n" , global_depth);
         fprintf(res_file , "(update_parent_dir_sn) -->  Creating Current Depth CSV file for depth %d  ..... \n" , global_depth);
@@ -221,13 +227,82 @@ void update_parent_dir_sn(FILE* res_file, List previous , List current , int glo
         curr_depth_fp = fopen(fileName , "w+");
         fprintf(curr_depth_fp ,"Object ID, Object SN, Parent Dir ID, Object Type\n" );
         LIST_FOREACH(Object_Info , iter ,current){
-            fprintf(curr_depth_fp ,"%s, %d , %s, %c\n" ,
+            fprintf(curr_depth_fp ,"%s, %lu , %s, %c\n" ,
                     iter->object_id , iter->object_sn , iter->parent_dir_id , iter->object_type);
         }
         fclose(prev_depth_fp);
-
+        temp_oi = listGetFirst(current);//Just in order to reset the iterator of the current list to the beginning
         free(fileName);
+         */
+
+        //NOW Lets Update the parent SNs!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        printf("(update_parent_dir_sn) --> Depth %d ..... \n", global_depth);
+        fprintf(res_file , "(update_parent_dir_sn) --> Depth %d ..... \n", global_depth);
+
+        Object_Info prev_list_iterator = listGetFirst(previous);
+        Object_Info curr_list_iterator = listGetFirst(current);
+        int curr_level_objects_count = 0;
+        int prev_list_size = listGetSize(previous);
+        int curr_list_size = listGetSize(current);
+
+        for(int i = 0 ; i < prev_list_size ; i++){ //iterate over Previous level list
+            unsigned long current_sn_to_set = prev_list_iterator->object_sn;
+            Dir parent_dir_object = (Dir)(ht_get(ht_dirs , prev_list_iterator->object_id));
+
+            printf("(update_parent_dir_sn) -------> Parent sn is %lu ..... \n", current_sn_to_set);
+            fprintf(res_file , "(update_parent_dir_sn) -------> Parent sn is %lu ..... \n", current_sn_to_set);
+
+            if(prev_list_iterator->object_type == 'F'){
+                //A File cant be Parent directory for anyone
+                prev_list_iterator = listGetNext(previous); //advance to the next object in the previous level
+                continue;
+            }else{ //The object is a directory it can be a parent
+                if(curr_level_objects_count >= curr_list_size){
+                    prev_list_iterator = listGetNext(previous); //advance to the next object in the previous level
+                    continue;
+                }
+                char* parent_id = curr_list_iterator->parent_dir_id;
+                fprintf(res_file , "(update_parent_dir_sn) -------> Curr_Par_dir_id is %s ..... \n", parent_id);
+
+                //now lets iterate over the current list while we have objects with the same parent id
+                while((curr_list_iterator != NULL)&&(strcmp(parent_id , curr_list_iterator->parent_dir_id) == 0)){
+                    if(curr_list_iterator->object_type == 'F'){
+                        temp_file = (File)(ht_get(ht_files , curr_list_iterator->object_id));
+                        assert(temp_file);
+                        file_set_parent_dir_sn(temp_file ,current_sn_to_set);
+                        fprintf(res_file , " Parent_sn - curr_file_id : %lu - %s\n",temp_file->dir_sn , temp_file->file_id);
+                        printf(" Parent_sn - curr_file_id : %lu - %s\n",temp_file->dir_sn , temp_file->file_id);
+                        //add to the prevDir object - dir_add_file
+                        dir_add_file(parent_dir_object ,curr_list_iterator->object_sn);
+                    } else{
+                        temp_dir = (Dir)(ht_get(ht_dirs , curr_list_iterator->object_id));
+                        assert(temp_dir);
+                        dir_set_parent_dir_sn(temp_dir , current_sn_to_set);
+                        fprintf(res_file , " Parent_sn - curr_file_id : %lu - %s\n",temp_dir->parent_dir_sn , temp_dir->dir_id);
+                        printf(" Parent_sn - curr_file_id : %lu - %s\n",temp_dir->parent_dir_sn , temp_dir->dir_id);
+                        //add to the prevDir object - dir_add_sub_dir
+                        dir_add_sub_dir(parent_dir_object , curr_list_iterator->object_sn);
+                    }
+                    curr_list_iterator = listGetNext(current);//advance to the next object in the current level
+                    curr_level_objects_count++;
+                }
+            }
+            prev_list_iterator = listGetNext(previous); //advance to the next object in the previous level
+        }
     }
+//    temp_oi = listGetFirst(current);
+//    fprintf(res_file , "------------------------ Printing updated CSV for current level --------------------------\n");
+//    LIST_FOREACH(Object_Info , iter1 ,current){
+//        if(iter1->object_type == 'F'){
+//            temp_file = (File)(ht_get(ht_files , iter1->object_id));
+//            assert(temp_file);
+//            fprintf(res_file , " Parent_sn - curr_file_id : %lu - %s\n",temp_file->dir_sn , temp_file->file_id);
+//        } else{
+//            temp_dir = (Dir)(ht_get(ht_dirs , iter1->object_id));
+//            assert(temp_dir);
+//            fprintf(res_file , " Parent_sn - curr_file_id : %lu - %s\n",temp_dir->parent_dir_sn , temp_dir->dir_id);
+//        }
+//    }
 }
 
 /* ****************************************************** MAIN ******************************************************** */
@@ -295,6 +370,9 @@ int main(){
     /* Polina files addresses */
     input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
     res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+    /* Server files addresses */
+    //input_file = fopen("/home/polinam/03_01/input_example.txt" , "r");
+    //res_file_1 = fopen("/home/polinam/03_01//res_file_1.txt" , "w");
 
     if(input_file == NULL){ //check the file was opened successfully - if not terminate
         printf("(Parser)--> Can't open input file/s =[ \n");
@@ -348,7 +426,6 @@ int main(){
                             listDestroy(previous_depth_objects); //Empty the previous_depth_objects list
                             previous_depth_objects = listCopy(curr_depth_objects);//Copy the curr_depth_objects list to the previous_depth_objects
                             listClear(curr_depth_objects); //Empty the curr_depth_objects list
-
                             global_current_depth = depth;
                         }
                         break;
@@ -453,5 +530,12 @@ int main(){
     //printf("(Parser) --> -------------- Print File Hash Table :\n");
     //print_ht_File(ht_files);
 
+    //TODO Create CSV File For Blocks from ht_blocks
+    //TODO Create CSV File For Files from ht_files
+    //TODO Create CSV File For Dirs from ht_dirs
+
+    //TODO Free All Hashtables and Lists
+
+    //TODO Remove all irrelevant Printfs
     return 0;
 }

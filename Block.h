@@ -79,7 +79,7 @@ Block block_create(char* block_id , unsigned long block_sn , unsigned int block_
     }
 
     printf("(Block)--> Created Block Sucessfully:\n");
-    printf("            - SN   : %d \n" , block->block_sn);
+    printf("            - SN   : %lu \n" , block->block_sn);
     printf("            - ID   : %s \n" , block->block_id);
     printf("            - Size : %d \n" , block->block_size);
     return block;
@@ -130,8 +130,8 @@ ErrorCode block_add_file(Block block , char* file_id){
     listInsertFirst(block->files_list , copy_fID);
     block->shared_by_num_files += 1;
 
-    printf("(Block)--> Containing file was added to block Sucessfully:\n");
-    printf("            - Block ID   : %s \n" , block->block_sn);
+    printf("(Block)--> Containing file was added to block Successfully:\n");
+    printf("            - Block SN   : %lu \n" , block->block_sn);
     printf("            - File  ID   : %s \n" , file_id);
     return SUCCESS;
 }

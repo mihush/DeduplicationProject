@@ -95,8 +95,8 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
         return NULL;
     }
 
-    printf("(Directory)--> Created Directory Sucessfully:\n");
-    printf("              - SN    : %d \n" , dir->dir_sn);
+    printf("(Directory)--> Created Directory Successfully:\n");
+    printf("              - SN    : %lu \n" , dir->dir_sn);
     printf("              - ID    : %s \n" , dir->dir_id);
     printf("              - Depth : %d \n" , dir->dir_depth);
     return dir;
@@ -115,7 +115,7 @@ void dir_destroy(Dir dir){
     listDestroy(dir->dirs_list);
     listDestroy(dir->files_list);
     free(dir);
-    printf("(Directory)--> Destroyed Directory Sucessfully \n");
+    printf("(Directory)--> Destroyed Directory Successfully \n");
 }
 
 /*
@@ -143,11 +143,11 @@ unsigned int dir_get_depth(Dir dir){
 }
 
 /* Adding file into the directory */
-ErrorCode dir_add_file(Dir dir , unsigned int file_sn){
+ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
     if(dir != NULL && file_sn > 0){
         return INVALID_INPUT;
     }
-    unsigned int* temp = malloc(sizeof(*temp));
+    unsigned long* temp = malloc(sizeof(*temp));
     if(!temp){
         printf("(Directory)--> Adding file to Directory - Allocation Error (1) \n");
         return OUT_OF_MEMORY;
@@ -161,18 +161,18 @@ ErrorCode dir_add_file(Dir dir , unsigned int file_sn){
 
     }
     dir->num_of_files += 1;
-    printf("(Directory)--> File was added to Directory Sucessfully:\n");
-    printf("            - File  SN     : %s \n" , file_sn);
-    printf("            - Directory SN : %s \n" , dir->dir_sn);
+    printf("(Directory)--> File was added to Directory Successfully:\n");
+    printf("            - File  SN     : %lu \n" , file_sn);
+    printf("            - Directory SN : %lu \n" , dir->dir_sn);
     return SUCCESS;
 }
 
 /* Adding sub_dir into the directory */
-ErrorCode dir_add_sub_dir(Dir dir , unsigned int dir_sn){
+ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn){
     if(dir != NULL && dir_sn > 0){
         return INVALID_INPUT;
     }
-    unsigned int* temp = malloc(sizeof(*temp));
+    unsigned long* temp = malloc(sizeof(*temp));
     if(!temp){
         printf("(Directory)--> Adding sub directory to Directory - Allocation Error (1) \n");
         return OUT_OF_MEMORY;
@@ -185,9 +185,9 @@ ErrorCode dir_add_sub_dir(Dir dir , unsigned int dir_sn){
         return OUT_OF_MEMORY;
     }
     dir->num_of_subdirs += 1;
-    printf("(Directory)--> Directory was added to Parent Directory Sucessfully:\n");
-    printf("            - Directory  SN : %s \n" , dir_sn);
-    printf("            - Parent Dir SN : %s \n" , dir->dir_sn);
+    printf("(Directory)--> Directory was added to Parent Directory Successfully:\n");
+    printf("            - Directory  SN : %lu \n" , dir_sn);
+    printf("            - Parent Dir SN : %lu \n" , dir->dir_sn);
     return SUCCESS;
 }
 /* **************** END **************** Directory STRUCT Functions **************** END **************** */

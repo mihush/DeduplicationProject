@@ -119,7 +119,7 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
         return NULL;
     }
     printf("(File)--> Created File Sucessfully:\n");
-    printf("              - SN    : %d \n" , file->file_sn);
+    printf("              - SN    : %lu \n" , file->file_sn);
     printf("              - ID    : %s \n" , file->file_id);
     printf("              - Size  : %d \n" , file->file_size);
     printf("              - Depth : %d \n" , file->file_depth);
