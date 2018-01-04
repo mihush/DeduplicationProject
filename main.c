@@ -419,6 +419,7 @@ int main(){
                         //Check if current depth (in variable depth) is bigger than the one in global_current_depth
                         if(depth > global_current_depth){
                             printf("(Parser)--> Changing DEPTHHHHHHHHHHHHHHHHHHHHHHHHHHHHH \n");
+
                             fprintf(res_file_1, "(Parser)--> Changing DEPTHHHHHHHHHHHHHHHHHHHHHHHHHHHHH \n");
                             //This means we have reached a new depth and can update parent_dir_sn for objects from previous levels
                             update_parent_dir_sn(res_file_1 , previous_depth_objects , curr_depth_objects , global_current_depth);
