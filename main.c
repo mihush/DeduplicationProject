@@ -1,7 +1,6 @@
 /***************************************************** INCLUDES *******************************************************/
 
 #include "HashTable.h"
-#include <windows.h>
 #include "Utilities.h"
 
 
@@ -178,36 +177,26 @@ void case_13_VS(File file_obj , FILE* res_file , FILE *input_file , char buff[BU
  * update_parent_dir_sn
  */
 void update_parent_dir_sn(FILE* res_file, List previous , List current , int global_depth){
+    File temp_file;
+    Dir temp_dir;
     printf("(update_parent_dir_sn) -->  Updating Parent directory serial numbers ..... \n");
     fprintf(res_file , "(update_parent_dir_sn) -->  Updating Parent directory serial numbers ..... \n");
     if(global_depth == 0){ //We are at root Level directory just set everyone to be the children of root
         unsigned long root_sn = root_directory->dir_sn;
+
         LIST_FOREACH(Object_Info , iter ,current){
             if(iter->object_type == 'F'){
-                File temp_file = (File)(ht_get(ht_files , iter->object_id));
+                temp_file = (File)(ht_get(ht_files , iter->object_id));
                 assert(temp_file);
                 file_set_parent_dir_sn(temp_file ,root_sn);
+                fprintf(res_file , " Parent_sn - curr_file_id : %d - %s\n",temp_file->dir_sn , temp_file->file_id);
             } else{
-                Dir temp_dir = (Dir)(ht_get(ht_dirs , iter->object_id));
+                temp_dir = (Dir)(ht_get(ht_dirs , iter->object_id));
                 assert(temp_dir);
                 dir_set_parent_dir_sn(temp_dir , root_sn);
+                fprintf(res_file , " Parent_sn - curr_file_id : %d - %s\n",temp_dir->parent_dir_sn , temp_dir->dir_id);
             }
         }
-
-//        fprintf(res_file , "------------------------ Updating First Level --------------------------\n");
-//        List copy_current = listCopy(current);
-//        LIST_FOREACH(Object_Info , iter1 ,copy_current){
-//            if(iter1->object_type == 'F'){
-//                File temp_file = (File)(ht_get(ht_files , iter1->object_id));
-//                assert(temp_file);
-//                fprintf(res_file , " Parent_sn - curr_file_id : %d - %s",temp_file->dir_sn , temp_file->file_id);
-//            } else{
-//                Dir temp_dir = (Dir)(ht_get(ht_dirs , iter1->object_id));
-//                assert(temp_dir);
-//                fprintf(res_file , " Parent_sn - curr_file_id : %d - %s",temp_dir->parent_dir_sn , temp_dir->dir_sn);
-//            }
-//        }
-//        fprintf(res_file , "------------------------ Updating First Level --------------------------\n");
     }else{ //Go over both lists and update accordingly
         //Create Previous Depth CSV File
         printf("(update_parent_dir_sn) -->  Creating Previous Depth CSV file for depth %d  ..... \n" , global_depth);

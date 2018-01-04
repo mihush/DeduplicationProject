@@ -30,7 +30,7 @@ typedef enum{
 #define CHUNKE_ID_LEN 10
 #define CHUNKE_SIZE_LEN 6
 #define DIR_SIZE 0
-
+#define FILE_ATTRIBUTE_DIRECTORY 0x00000010
 
 /* **************** START **************** object_info struct **************** START **************** */
 /*

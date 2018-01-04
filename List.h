@@ -364,6 +364,7 @@ ListResult listClear(List list);
 */
 void listDestroy(List list);
 
+ListResult listRestartIterator(List list);
 /**
 * Macro for iterating over a list.
 *

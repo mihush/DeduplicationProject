@@ -59,6 +59,13 @@ void listDestroy(List list) {
     destroyNodes(list->first, list->freeElement);
     free(list);
 }
+ListResult listRestartIterator(List list) {
+    if (!list) {
+        return LIST_NULL_ARGUMENT;
+    }
+    list->iterator = list->first;
+    return LIST_SUCCESS;
+}
 
 List listCopy(List list) {
     //Check for invalid arguments
