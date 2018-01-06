@@ -6,6 +6,7 @@
 #define DEDUPLICATION_PROJ_HASHTABLE_H
 
 /* *************** START ************** HashTable Definition *************** START *************** */
+/****************************** INCLUDES *****************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -16,6 +17,7 @@
 #include "List.h"
 #include "Directory.h"
 
+/****************************** DEFINES *****************************/
 #define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
 //TODO Set Correct Sizes
@@ -209,6 +211,29 @@ Data ht_get( HashTable ht, char *key ) {
     return pair->data;
 }
 
+/*
+ * ht_free - freeing all alocations of HashTable.
+ */
+void free_hashT(HashTable ht){
+    long num_of_elements = ht->num_of_elements;
+    long size_of_lists = 0;
+    struct entry_t* temp_to_free;
+
+    // Remove lists elements of each HashTable cell
+    for(int i=0 ; i<num_of_elements ; i++){
+        // free each list element of cell i
+        while(ht->table[i]) {
+            temp_to_free = ht->table[i];
+            ht->table[i] = temp_to_free->next;
+            free(temp_to_free);
+        }
+        assert(ht->table[i]==NULL);
+    }
+    free(ht->table);
+    free(ht);
+
+}
+
 void print_ht_File(HashTable ht){
     printf("Printing HashTable: \n");
     for(int i = 0; i < (ht->size_table) ; i++ ){
@@ -231,6 +256,9 @@ void print_ht_File(HashTable ht){
     }
 }
 
+
+
 /* **************** END *************** HashTable Functions **************** END ***************** */
+
 
 #endif //DEDUPLICATION_PROJ_HASHTABLE_H
