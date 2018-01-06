@@ -10,7 +10,7 @@ typedef enum{
     INVALID_INPUT,
     OUT_OF_MEMORY
 } ErrorCode;
-
+#include "List.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +33,7 @@ typedef enum{
 #define FILE_ATTRIBUTE_DIRECTORY 0x00000010
 
 /* **************** START **************** object_info struct **************** START **************** */
+
 /*
  * Definition of a object_info structure:
  *

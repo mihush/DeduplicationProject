@@ -5,13 +5,10 @@
 #ifndef DEDUPLICATION_PROJECT_BLOCK_H
 #define DEDUPLICATION_PROJECT_BLOCK_H
 
-#include "List.h"
+#include "HashTableF.h"
 #include "Utilities.h"
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
+
 /* *************** START ************** Block STRUCT Definition *************** START *************** */
 /*
  * Definition of a block structure:
@@ -26,7 +23,8 @@ struct block_t{
     char* block_id; // Hashed
     unsigned int block_size;
     unsigned int shared_by_num_files;
-    List files_list; // list of file ids containing this block
+    //List files_list; // list of file ids containing this block
+    HashTableF files_ht;
 };
 typedef struct block_t *Block;
 
@@ -71,12 +69,20 @@ Block block_create(char* block_id , unsigned long block_sn , unsigned int block_
     block->shared_by_num_files = 0;
     block->block_size = block_size;
 
+    block->files_ht = ht_createF('N');
+    if(block->files_ht == NULL){
+        free(block->block_id);
+        free(block);
+        return NULL;
+    }
+
+    /*
     block->files_list = listCreate(copyString , freeString);
     if(block->files_list == NULL){ //check allocation - if failed free everything else
         free(block->block_id);
         free(block);
         return NULL;
-    }
+    }*/
 
     printf("(Block)--> Created Block Sucessfully:\n");
     printf("            - SN   : %lu \n" , block->block_sn);
@@ -92,7 +98,8 @@ Block block_create(char* block_id , unsigned long block_sn , unsigned int block_
 void block_destroy(Block block){
     assert(block);
     free(block->block_id);
-    listDestroy(block->files_list);
+    //listDestroy(block->files_list);
+    //TODO HashTable Destroy
     free(block);
     printf("(Block)--> Destroyed Block Sucessfully:\n");
 }
@@ -121,14 +128,10 @@ ErrorCode block_add_file(Block block , char* file_id){
         return INVALID_INPUT;
     }
 
-    char* copy_fID = malloc(sizeof(char)*(FILE_ID_LEN + 1)); //allocate string for block_id
-    if(copy_fID == NULL){ //check successful allocation
-        return OUT_OF_MEMORY;
-    }
-    strcpy(block->block_id , copy_fID);
+    ht_setF(block->files_ht, file_id);
+    //TODO Check for memory allocation
 
-    listInsertFirst(block->files_list , copy_fID);
-    block->shared_by_num_files += 1;
+    (block->shared_by_num_files)++;
 
     printf("(Block)--> Containing file was added to block Successfully:\n");
     printf("            - Block SN   : %lu \n" , block->block_sn);

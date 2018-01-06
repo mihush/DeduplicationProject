@@ -29,7 +29,7 @@ struct dir_t{
     unsigned long dir_sn;
     char* dir_id;
     unsigned long parent_dir_sn;
-    unsigned int dir_depth;
+    int dir_depth;
     unsigned short num_of_subdirs;
     unsigned short num_of_files;
     List dirs_list; // list of serial numbers
@@ -42,7 +42,7 @@ static ListElement copy_directory_info(ListElement directory_info){
     assert(directory_info);
     unsigned long* sn = (unsigned long*)(directory_info);
     unsigned long* sn_copy = malloc(sizeof(*sn_copy));
-    if(!sn_copy){
+    if(sn_copy == NULL){
         printf("---> allocation failed at list_element copy_func\n");
         return NULL;
     }
@@ -144,11 +144,11 @@ unsigned int dir_get_depth(Dir dir){
 
 /* Adding file into the directory */
 ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
-    if(dir != NULL && file_sn > 0){
+    if(dir == NULL || file_sn < 0){
         return INVALID_INPUT;
     }
     unsigned long* temp = malloc(sizeof(*temp));
-    if(!temp){
+    if(temp == NULL){
         printf("(Directory)--> Adding file to Directory - Allocation Error (1) \n");
         return OUT_OF_MEMORY;
     }
@@ -160,7 +160,7 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
         return OUT_OF_MEMORY;
 
     }
-    dir->num_of_files += 1;
+    (dir->num_of_files)++;
     printf("(Directory)--> File was added to Directory Successfully:\n");
     printf("            - File  SN     : %lu \n" , file_sn);
     printf("            - Directory SN : %lu \n" , dir->dir_sn);
@@ -169,22 +169,22 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
 
 /* Adding sub_dir into the directory */
 ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn){
-    if(dir != NULL && dir_sn > 0){
+    if(dir == NULL || dir_sn < 0){
         return INVALID_INPUT;
     }
     unsigned long* temp = malloc(sizeof(*temp));
-    if(!temp){
+    if(temp == NULL){
         printf("(Directory)--> Adding sub directory to Directory - Allocation Error (1) \n");
         return OUT_OF_MEMORY;
     }
     *temp = dir_sn;
-    ListResult res = listInsertFirst(dir->files_list , temp);
+    ListResult res = listInsertFirst(dir->dirs_list, temp);
     if(res != LIST_SUCCESS){
         free(temp);
         printf("(Directory)--> Adding sub directory to Directory - Allocation Error (2) \n");
         return OUT_OF_MEMORY;
     }
-    dir->num_of_subdirs += 1;
+    (dir->num_of_subdirs)++;
     printf("(Directory)--> Directory was added to Parent Directory Successfully:\n");
     printf("            - Directory  SN : %lu \n" , dir_sn);
     printf("            - Parent Dir SN : %lu \n" , dir->dir_sn);

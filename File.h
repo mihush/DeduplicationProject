@@ -191,13 +191,14 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     bi->size = block_size;
 
     ListResult res = listInsertLast(file->blocks_list , bi);
+
     if(res != LIST_SUCCESS){
         printf("(File)--> Adding block to file - List of files containing block allocation Error (3) \n");
         free(bi->id);
         free(bi);
         return OUT_OF_MEMORY;
     }
-    file->num_blocks += 1;
+    (file->num_blocks)++;
     free(bi->id);
     free(bi);
 

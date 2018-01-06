@@ -19,9 +19,10 @@
 #define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
 //TODO Set Correct Sizes
-#define BLOCKS_INIT_SIZE 5007
-#define FILES_INIT_SIZE 5007
-#define DIRS_INIT_SIZE 5007
+#define BLOCKS_INIT_SIZE 20000
+#define FILES_INIT_SIZE 10000
+#define DIRS_INIT_SIZE 6000
+#define BLOCKS_IN_FILE_SIZE 300
 typedef void* Data;
 
 struct entry_t {
@@ -61,6 +62,9 @@ HashTable ht_create(char type) {
             break;
         case 'D':
             ht->size_table = DIRS_INIT_SIZE;
+            break;
+        case 'N': //for Hashtable in file object
+            ht->size_table = BLOCKS_IN_FILE_SIZE;
             break;
         default:
             ht->size_table = INIT_SIZE; //Shouldn't really get here
@@ -112,15 +116,14 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
         return NULL;
     }
 
-    //newpair->key = strdup(key);
     newpair->key = malloc(sizeof(char)*(strlen(key)+1));
     if(newpair->key == NULL){
         printf("(HashTable)--> Creating new pair - Allocation Error (2) \n");
         free(newpair);
         return NULL;
     }
-    strcpy(newpair->key , key)
-            ;
+    strcpy(newpair->key , key);
+
     if(flag == 'B'){ // save the data object
         printf("(HashTable)--> Creating new pair - BLOCK \n");
         newpair->data = block_create(key , sn, size);
@@ -128,7 +131,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
         printf("(HashTable)--> Creating new pair - DIRECTORY \n");
         newpair->data = dir_create(key , depth , sn);
     }
-    else{ //This is a file object
+    else if(flag == 'F'){ //This is a file object
         printf("(HashTable)--> Creating new pair - FILE \n");
         newpair->data = file_create(key , depth , sn , size);
     }
@@ -207,28 +210,6 @@ Data ht_get( HashTable ht, char *key ) {
     }
     //found the key - return the data
     return pair->data;
-}
-
-void print_ht_File(HashTable ht){
-    printf("Printing HashTable: \n");
-    for(int i = 0; i < (ht->size_table) ; i++ ){
-        Entry pair = ht->table[i];
-        /* Step through the hash_key, looking for our value. */
-        while( pair != NULL && pair->key != NULL) {
-            printf("Key : %s \n SN : %lu \n" , pair->key , ((File)(pair->data))->file_sn);
-            printf("Num of blocks: %d \n " , ((File)(pair->data))->num_blocks);
-            printf("The file contains the following blocks:\n");
-            Block_Info iter = listGetFirst(((File)(pair->data))->blocks_list);
-            if(iter == NULL && (((File)(pair->data))->num_blocks > 0) ){
-                printf(" This file has no blocks - ooooppppsss!\n");
-            }
-
-            LIST_FOREACH(Block_Info, iter, ((File)(pair->data))->blocks_list) {
-                printf("%s -- %d \n", iter->id , iter->size);
-            }
-            pair = pair->next;
-        }
-    }
 }
 
 /* **************** END *************** HashTable Functions **************** END ***************** */
