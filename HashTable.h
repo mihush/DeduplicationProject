@@ -6,6 +6,7 @@
 #define DEDUPLICATION_PROJ_HASHTABLE_H
 
 /* *************** START ************** HashTable Definition *************** START *************** */
+/****************************** INCLUDES *****************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -16,6 +17,7 @@
 #include "List.h"
 #include "Directory.h"
 
+/****************************** DEFINES *****************************/
 #define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
 //TODO Set Correct Sizes
@@ -211,6 +213,73 @@ Data ht_get( HashTable ht, char *key ) {
     //found the key - return the data
     return pair->data;
 }
+
+/*
+ * Destroy the data obj
+ */
+void data_destroy(Data data, char flag){
+    switch (flag){
+        case 'F':
+            file_destroy((File)data);
+            break;
+        case 'D':
+            dir_destroy((Dir)data);
+            break;
+        case 'B':
+            block_destroy((Block)data);
+            break;
+    }
+}
+
+/*
+ * ht_free - freeing all alocations of HashTable.
+ */
+void hashTable_destroy(HashTable ht , char flag){
+    long num_of_elements = ht->num_of_elements;
+    long size_of_lists = 0;
+    struct entry_t* temp_to_free;
+    // Remove lists elements of each HashTable cell
+    for(int i=0 ; i<num_of_elements ; i++){
+        // free each list element of cell i
+        while(ht->table[i]) {
+            temp_to_free = ht->table[i];
+            ht->table[i] = temp_to_free->next;
+
+            // Destroy elements fields
+            data_destroy(temp_to_free->data , flag);
+            free(temp_to_free->key);
+            free(temp_to_free);
+        }
+        assert(ht->table[i]==NULL);
+    }
+    free(ht->table);
+    free(ht);
+}
+
+
+void print_ht_File(HashTable ht){
+    printf("Printing HashTable: \n");
+    for(int i = 0; i < (ht->size_table) ; i++ ){
+        Entry pair = ht->table[i];
+        /* Step through the hash_key, looking for our value. */
+        while( pair != NULL && pair->key != NULL) {
+            printf("Key : %s \n SN : %lu \n" , pair->key , ((File)(pair->data))->file_sn);
+            printf("Num of blocks: %d \n " , ((File)(pair->data))->num_blocks);
+            printf("The file contains the following blocks:\n");
+            Block_Info iter = listGetFirst(((File)(pair->data))->blocks_list);
+            if(iter == NULL && (((File)(pair->data))->num_blocks > 0) ){
+                printf(" This file has no blocks - ooooppppsss!\n");
+            }
+
+            LIST_FOREACH(Block_Info, iter, ((File)(pair->data))->blocks_list) {
+                printf("%s -- %d \n", iter->id , iter->size);
+            }
+            pair = pair->next;
+        }
+    }
+}
+
+
 
 /* **************** END *************** HashTable Functions **************** END ***************** */
 

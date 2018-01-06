@@ -101,7 +101,6 @@ void block_destroy(Block block){
     //listDestroy(block->files_list);
     //TODO HashTable Destroy
     free(block);
-    printf("(Block)--> Destroyed Block Sucessfully:\n");
 }
 
 /*
