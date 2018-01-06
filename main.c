@@ -49,25 +49,18 @@ char* case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
     }
     strncpy(dir_name_hash , buff , DIR_NAME_HASH);
     dir_name_hash[DIR_NAME_HASH] = '\0';
-    //fprintf(res_file , "--> Dir name is: %s \n" , dir_name_hash);
-    //fprintf(res_file , "(Parser) --> Dir name is: %s \n" , dir_name_hash);
-    printf("(Parser) --> Dir name is: %s \n" , dir_name_hash);
     return dir_name_hash;
 }
 
 /* NAMESPACE DEPTH */
 unsigned short case_4_get_depth(FILE *res_file , char buff[BUFFER_SIZE]){
     unsigned short namespace_depth = (unsigned short)strtol(buff,(char**)NULL, 10);
-    //fprintf(res_file , "--> Namespace depth is : %d \n" , namespace_depth);
-    printf("(Parser) --> Namespace depth is : %d \n" , namespace_depth);
     return namespace_depth ;
 }
 
 /* FILE SIZE */
 unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
     unsigned int file_size = (unsigned int)strtol(buff,(char **)NULL, 10);
-    //fprintf(res_file , "--> File size is : %d \n" , file_size);
-    printf("(Parser) --> File size is : %d \n" , file_size);
     return file_size;
 }
 
@@ -80,7 +73,6 @@ unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
  */
 char case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
     unsigned int file_attribute = (unsigned int)strtol(buff,(char **)NULL, 16);
-    //fprintf(res_file , "--> File attribute is : %d \n" , file_attribute);
     printf("(Parser) --> File attribute is (HEX): %X \n" , file_attribute);
     fprintf(res_file , "(Parser) --> File attribute is (HEX): %X \n" , file_attribute);
     char res;
@@ -361,6 +353,8 @@ int main(){
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /// File  Manipulation Variables
     int num_of_input_files = 1;
+    char input_dir_start[255];
+    char current_file_to_process[400];
     FILE *input_file , *res_file_1;
     char buff[BUFFER_SIZE];
     bool read_empty_line_chucnks = false;
@@ -394,49 +388,56 @@ int main(){
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /* ---------------------------------------------------------------------------------------- */
     /* -------------------- File Manipulations - Getting Files to Process  -------------------- */
-    /*printf("How many files would you like to process?\n");
+
+    printf("Please insert the path to the directory containing the input files: \n");
+    scanf("%[^\n]s" , &input_dir_start);
+
+    printf("How many files would you like to process?\n");
     scanf("%d" , &num_of_input_files);
+    //printf("inputs - %d",num_of_input_files);
     if(num_of_input_files < 1){ //check that at least one file will be processed
         printf("You have requested an illegal number of files to process - The program will end now.");
         return 0;
     }
-    printf("Please insert the path to the directory containing the input files: \n");
-    scanf("%s" , input_dir_start);
+    char input_file_names[num_of_input_files][17];
 
     printf("Now we will insert the file names to be processed:\n");
-    for (int i = 0; i <num_of_input_files ; ++i) {
+    for (int i = 0; i < num_of_input_files ; ++i) {
         printf("Please insert the name of file %d : \n",(i+1));
-        scanf("%s" , file_names[i]);
-    }*/
+        scanf("%s" , &input_file_names[i]);
+    }
     /* -------------------- File Manipulations - Getting Files to Process  -------------------- */
     /* ---------------------------------------------------------------------------------------- */
     /* ------------------------- File Manipulations  - opening files  ------------------------- */
     /* Go Over each file, parsing the data into correspond structures */
     /* -------------------- Get File Names To Process -------------------- */
 
-    printf("(Parser)--> ----- Opening File ----- \n");
+
     /* michal files addresses */
     //input_file = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\input_example.txt" , "r");
     //res_file_1 = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\res_file_1.txt" , "w");
     /* Polina files addresses */
-    input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
+    //input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
     res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
     /* Server files addresses */
     //input_file = fopen("/home/polinam/03_01/input_example.txt" , "r");
     //res_file_1 = fopen("/home/polinam/03_01//res_file_1.txt" , "w");
 
-    if(input_file == NULL){ //check the file was opened successfully - if not terminate
-        printf("(Parser)--> Can't open input file/s =[ \n");
-        return 0;
-    }
+
     /* ------------------------- File Manipulations  - opening files  ------------------------- */
     /* ---------------------------------------------------------------------------------------- */
     /* ------------------------------------- File Reading ------------------------------------- */
 
-
-
     /* Go over all file systems */
     for (int i = 0; i < num_of_input_files ; ++i) {
+        printf("(Parser)--> ----- Opening File ----- \n");
+        strcat(current_file_to_process , input_dir_start);
+        strcat(current_file_to_process ,  input_file_names[i]);
+        input_file = fopen(current_file_to_process , "r");
+        if(input_file == NULL){ //check the file was opened successfully - if not terminate
+            printf("(Parser)--> Can't open input file/s =[ \n");
+            return 0;
+        }
         printf("(Parser)-->  ----- Start Reading the file ----- \n");
         /* Skip till the first empty line - over the file system description */
         do{
@@ -468,8 +469,6 @@ int main(){
                         fprintf(res_file_1, "(Parser)--> Namespace Depth is: %d\n" , depth);
                         //Check if current depth (in variable depth) is bigger than the one in global_current_depth
                         if(depth > global_current_depth){
-                            printf("(Parser)--> Changing DEPTHHHHHHHHHHHHHHHHHHHHHHHHHHHHH \n");
-
                             fprintf(res_file_1, "(Parser)--> Changing DEPTHHHHHHHHHHHHHHHHHHHHHHHHHHHHH \n");
                             //This means we have reached a new depth and can update parent_dir_sn for objects from previous levels
                             update_parent_dir_sn(res_file_1 , previous_depth_objects , curr_depth_objects , global_current_depth);
@@ -565,8 +564,6 @@ int main(){
     }
 
     printf("(Parser) --> --- Finished reading the input file - Now lets start processing ---\n");
-    printf("(Parser)--> Changing DEPTHHHHHHHHHHHHHHHHHHHHHHHHHHHHH \n");
-    fprintf(res_file_1, "(Parser)--> Changing DEPTHHHHHHHHHHHHHHHHHHHHHHHHHHHHH \n");
     //This means we have reached a new depth and can update parent_dir_sn for objects from previous levels
     update_parent_dir_sn(res_file_1 , previous_depth_objects , curr_depth_objects , global_current_depth);
 

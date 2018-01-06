@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
+#include <assert.h>
 
 #define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
@@ -173,5 +174,29 @@ DataF ht_getF(HashTableF ht, char *key ) {
     }
     //found the key - return the data
     return pair->data;
+}
+
+/*
+ * ht_free - freeing all allocations of HashTable.
+ */
+void hashTableF_destroy(HashTableF ht){
+    long num_of_elements = ht->num_of_elements;
+    long size_of_lists = 0;
+    struct entryf_t* temp_to_free;
+    // Remove lists elements of each HashTable cell
+    for(int i = 0 ; i < num_of_elements ; i++){
+        // free each list element of cell i
+        while(ht->table[i]) {
+            temp_to_free = ht->table[i];
+            ht->table[i] = temp_to_free->next;
+
+            // Destroy elements fields
+            free(temp_to_free->key);
+            free(temp_to_free);
+        }
+        assert(ht->table[i]==NULL);
+    }
+    free(ht->table);
+    free(ht);
 }
 #endif //DEDUPLICATIONPROJECT_HASHTABLEF_H

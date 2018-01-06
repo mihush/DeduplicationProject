@@ -232,7 +232,7 @@ void data_destroy(Data data, char flag){
 }
 
 /*
- * ht_free - freeing all alocations of HashTable.
+ * ht_free - freeing all allocations of HashTable.
  */
 void hashTable_destroy(HashTable ht , char flag){
     long num_of_elements = ht->num_of_elements;
@@ -255,30 +255,6 @@ void hashTable_destroy(HashTable ht , char flag){
     free(ht->table);
     free(ht);
 }
-
-
-void print_ht_File(HashTable ht){
-    printf("Printing HashTable: \n");
-    for(int i = 0; i < (ht->size_table) ; i++ ){
-        Entry pair = ht->table[i];
-        /* Step through the hash_key, looking for our value. */
-        while( pair != NULL && pair->key != NULL) {
-            printf("Key : %s \n SN : %lu \n" , pair->key , ((File)(pair->data))->file_sn);
-            printf("Num of blocks: %d \n " , ((File)(pair->data))->num_blocks);
-            printf("The file contains the following blocks:\n");
-            Block_Info iter = listGetFirst(((File)(pair->data))->blocks_list);
-            if(iter == NULL && (((File)(pair->data))->num_blocks > 0) ){
-                printf(" This file has no blocks - ooooppppsss!\n");
-            }
-
-            LIST_FOREACH(Block_Info, iter, ((File)(pair->data))->blocks_list) {
-                printf("%s -- %d \n", iter->id , iter->size);
-            }
-            pair = pair->next;
-        }
-    }
-}
-
 
 
 /* **************** END *************** HashTable Functions **************** END ***************** */
