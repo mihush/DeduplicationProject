@@ -212,27 +212,47 @@ Data ht_get( HashTable ht, char *key ) {
 }
 
 /*
+ * Destroy the data obj
+ */
+void data_destroy(Data data, char flag){
+    switch (flag){
+        case 'F':
+            file_destroy((File)data);
+            break;
+        case 'D':
+            dir_destroy((Dir)data);
+            break;
+        case 'B':
+            block_destroy((Block)data);
+            break;
+    }
+}
+
+/*
  * ht_free - freeing all alocations of HashTable.
  */
-void free_hashT(HashTable ht){
+void hashTable_destroy(HashTable ht , char flag){
     long num_of_elements = ht->num_of_elements;
     long size_of_lists = 0;
     struct entry_t* temp_to_free;
-
     // Remove lists elements of each HashTable cell
     for(int i=0 ; i<num_of_elements ; i++){
         // free each list element of cell i
         while(ht->table[i]) {
             temp_to_free = ht->table[i];
             ht->table[i] = temp_to_free->next;
+
+            // Destroy elements fields
+            data_destroy(temp_to_free->data , flag);
+            free(temp_to_free->key);
             free(temp_to_free);
         }
         assert(ht->table[i]==NULL);
     }
     free(ht->table);
     free(ht);
-
 }
+
 
 void print_ht_File(HashTable ht){
     printf("Printing HashTable: \n");

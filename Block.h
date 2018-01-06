@@ -94,7 +94,6 @@ void block_destroy(Block block){
     free(block->block_id);
     listDestroy(block->files_list);
     free(block);
-    printf("(Block)--> Destroyed Block Sucessfully:\n");
 }
 
 /*
