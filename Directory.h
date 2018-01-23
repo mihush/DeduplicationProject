@@ -95,10 +95,10 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
         return NULL;
     }
 
-    printf("(Directory)--> Created Directory Successfully:\n");
-    printf("              - SN    : %lu \n" , dir->dir_sn);
-    printf("              - ID    : %s \n" , dir->dir_id);
-    printf("              - Depth : %d \n" , dir->dir_depth);
+//    printf("(Directory)--> Created Directory Successfully:\n");
+//    printf("              - SN    : %lu \n" , dir->dir_sn);
+//    printf("              - ID    : %s \n" , dir->dir_id);
+//    printf("              - Depth : %d \n" , dir->dir_depth);
     return dir;
 }
 ErrorCode dir_set_parent_dir_sn(Dir dir , unsigned long sn){
@@ -115,7 +115,6 @@ void dir_destroy(Dir dir){
     listDestroy(dir->dirs_list);
     listDestroy(dir->files_list);
     free(dir);
-    printf("(Directory)--> Destroyed Directory Successfully \n");
 }
 
 /*
@@ -161,9 +160,9 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
 
     }
     (dir->num_of_files)++;
-    printf("(Directory)--> File was added to Directory Successfully:\n");
-    printf("            - File  SN     : %lu \n" , file_sn);
-    printf("            - Directory SN : %lu \n" , dir->dir_sn);
+//    printf("(Directory)--> File was added to Directory Successfully:\n");
+//    printf("            - File  SN     : %lu \n" , file_sn);
+//    printf("            - Directory SN : %lu \n" , dir->dir_sn);
     return SUCCESS;
 }
 
@@ -185,9 +184,9 @@ ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn){
         return OUT_OF_MEMORY;
     }
     (dir->num_of_subdirs)++;
-    printf("(Directory)--> Directory was added to Parent Directory Successfully:\n");
-    printf("            - Directory  SN : %lu \n" , dir_sn);
-    printf("            - Parent Dir SN : %lu \n" , dir->dir_sn);
+//    printf("(Directory)--> Directory was added to Parent Directory Successfully:\n");
+//    printf("            - Directory  SN : %lu \n" , dir_sn);
+//    printf("            - Parent Dir SN : %lu \n" , dir->dir_sn);
     return SUCCESS;
 }
 /* **************** END **************** Directory STRUCT Functions **************** END **************** */

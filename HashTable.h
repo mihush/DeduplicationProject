@@ -239,7 +239,7 @@ void hashTable_destroy(HashTable ht , char flag){
     long size_of_lists = 0;
     struct entry_t* temp_to_free;
     // Remove lists elements of each HashTable cell
-    for(int i=0 ; i<num_of_elements ; i++){
+    for(int i = 0 ; i < num_of_elements ; i++){
         // free each list element of cell i
         while(ht->table[i]) {
             temp_to_free = ht->table[i];
@@ -250,7 +250,7 @@ void hashTable_destroy(HashTable ht , char flag){
             free(temp_to_free->key);
             free(temp_to_free);
         }
-        assert(ht->table[i]==NULL);
+        assert(ht->table[i] == NULL);
     }
     free(ht->table);
     free(ht);

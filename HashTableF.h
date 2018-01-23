@@ -113,7 +113,7 @@ EntryF ht_newpairF(char *key){
 /*
  * ht_set - Insert a key-value pair into a hash table.
  */
-DataF ht_setF(HashTableF ht, char *key) {
+EntryF ht_setF(HashTableF ht, char *key) {
     EntryF newpair = NULL;
     EntryF next = NULL;
     EntryF last = NULL;
@@ -130,7 +130,7 @@ DataF ht_setF(HashTableF ht, char *key) {
     /* There's already a pair. Let's replace that string. */
     if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
         //Return the pointer to the Block/File that already exists in the hash
-        return next->data;
+        return next;
     } else { /* Nope, could't find it.  Time to grow a pair. */
         newpair = ht_newpairF(key); //allocate new pair
         if(newpair == NULL){
@@ -150,7 +150,7 @@ DataF ht_setF(HashTableF ht, char *key) {
             newpair->next = next;
             last->next = newpair;
         }
-        return newpair->data;
+        return newpair;
     }
 }
 

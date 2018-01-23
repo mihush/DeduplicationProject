@@ -118,11 +118,11 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
         free(file);
         return NULL;
     }
-    printf("(File)--> Created File Sucessfully:\n");
-    printf("              - SN    : %lu \n" , file->file_sn);
-    printf("              - ID    : %s \n" , file->file_id);
-    printf("              - Size  : %d \n" , file->file_size);
-    printf("              - Depth : %d \n" , file->file_depth);
+//    printf("(File)--> Created File Sucessfully:\n");
+//    printf("              - SN    : %lu \n" , file->file_sn);
+//    printf("              - ID    : %s \n" , file->file_id);
+//    printf("              - Size  : %d \n" , file->file_size);
+//    printf("              - Depth : %d \n" , file->file_depth);
     return file;
 }
 
@@ -135,7 +135,6 @@ void file_destroy(File file){
     free(file->file_id);
     listDestroy(file->blocks_list);
     free(file);
-    printf("(File)--> Destroyed File Sucessfully \n");
 }
 
 /*
@@ -172,7 +171,6 @@ ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
  */
 ErrorCode file_add_block(File file , char* block_id , int block_size){
     if(file == NULL || block_id == NULL || block_size < 0){
-        printf("(File)--> Adding block to file - Invalid Input Error\n");
         return INVALID_INPUT;
     }
 
@@ -201,11 +199,10 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     (file->num_blocks)++;
     free(bi->id);
     free(bi);
-
-    printf("(File)--> Contained Block was added to File Sucessfully:\n");
-    printf("            - File  SN     : %lu \n" , file->file_sn);
-    printf("            - Block ID     : %s \n" , block_id);
-    printf("            - Block size   : %d \n" , block_size);
+//    printf("(File)--> Contained Block was added to File Sucessfully:\n");
+//    printf("            - File  SN     : %lu \n" , file->file_sn);
+//    printf("            - Block ID     : %s \n" , block_id);
+//    printf("            - Block size   : %d \n" , block_size);
     return SUCCESS;
 }
 
