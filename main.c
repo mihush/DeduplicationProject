@@ -10,7 +10,7 @@
 
 /************************************************** Global Params *****************************************************/
 /* Serial number for counting the elements which insert to the system */
-unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
+unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
 
 /* Hash-Tables for blocks, files , directories */
 HashTable ht_files , ht_blocks , ht_dirs;
@@ -42,7 +42,7 @@ bool check_12_z(char buff[STR_OF_Z]){
 
 /* DIRECTORY NAME */
 char* case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
-    char* dir_name_hash = malloc(sizeof(char)*DIR_NAME_LEN);
+    char* dir_name_hash = calloc(DIR_NAME_LEN,sizeof(char));
     if(!dir_name_hash){
         //printf("---> string allocation Failure\n ");
         return NULL;
@@ -91,7 +91,7 @@ char case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
 
 /* FILE ID */
 char* case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_of_file){
-    char* file_id = malloc(sizeof(char)*FILE_ID_LEN); // The value is 15 chars + 2 chars for index +1 for eol (end of line)
+    char* file_id = calloc(FILE_ID_LEN , sizeof(char)); // The value is 15 chars + 2 chars for index +1 for eol (end of line)
     if(file_id == NULL){
         return NULL;
     }
@@ -180,7 +180,7 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
             (*block_line_count)++;
         } while (strlen(buff) > 1);
     }
-    *finished_process_blocks=true;
+    *finished_process_blocks = true;
     return;
 }
 
@@ -500,7 +500,7 @@ int main(){
 //                        }
                         //Adding Directory Object to HashTable
                         if(obj_type == 'D'){
-                            if( dir_sn == 1){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
+                            if( dir_sn == 0){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
                                 root_directory = ht_set(ht_dirs , parent_dir_id , -1 , dir_sn ,DIR_SIZE , 'D' );
                                 dir_sn++;
                             }
@@ -529,7 +529,7 @@ int main(){
                         break;
                 }
 
-                if(read_empty_line_chucnks == false){
+                if(read_empty_line_chucnks == false && finished_process_blocks == false){
                     fgets(buff, BUFFER_SIZE , input_file); //read next line in current block
                     block_line_count++;
                 }
@@ -547,6 +547,9 @@ int main(){
                 free(parent_dir_id);
                 free(object_id);
                 file_was_created = false;
+                finished_process_blocks = false;
+                parent_dir_id = NULL; // Hashed ID of parent Directory
+                object_id = NULL;
             }
         }
         free(current_file_to_process);

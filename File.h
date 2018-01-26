@@ -213,6 +213,11 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     return SUCCESS;
 }
 
+//TODO compare between two files (files are considered identical if have the same blocks)
+// 1 - check sizes
+// 2 - check amount of blocks
+// 3 - check first block , second block, etc ....
+
 /* **************** END *************** File STRUCT Functions **************** END ***************** */
 
 
