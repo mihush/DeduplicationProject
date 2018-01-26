@@ -112,12 +112,11 @@ void case_13_VS(File file_obj , FILE* res_file , FILE *input_file , char buff[BU
     *read_empty_line_chucnks = false;
     char block_id[BLOCK_ID_LEN];
     unsigned int block_size = 0;
-    //Block insert_block;
 
     fgets(buff, BUFFER_SIZE, input_file);
     (*block_line_count)++;
-    //check next line
-    switch ((int) (buff[0])) {
+
+    switch ((int) (buff[0])) { //check next line
         case 'V':
             fgets(buff, BUFFER_SIZE, input_file);
             (*block_line_count)++;
@@ -411,7 +410,7 @@ int main(){
     //input_file = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\input_example.txt" , "r");
     //res_file_1 = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\res_file_1.txt" , "w");
     /* Polina files addresses */
-    input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
+    input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\0119.txt" , "r");
     res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
     /* Server files addresses */
     //input_file = fopen("/home/polinam/03_01/input_example.txt" , "r");
@@ -503,6 +502,12 @@ int main(){
                         break;
                     case 13: /* Line 13 is SV */
                         case_13_VS(file_obj , res_file_1 , input_file , buff , &block_line_count , &read_empty_line_chucnks);
+                        if (obj_type == 'F'){ //If there are no blocks in a non-zero size file
+                            //remove from hash table
+
+                            //decrease the file_sn counter
+                            files_sn--;
+                        }
                         break;
                     default:
                         break;

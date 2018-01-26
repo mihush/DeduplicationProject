@@ -39,8 +39,6 @@ typedef struct block_t *Block;
  *                      - zeros the counter that contains the amount of files sharing this block
  */
 Block block_create(char* block_id , unsigned long block_sn , unsigned int block_size){
-    assert(block_sn > 0); //check invalid input
-
     Block block = malloc(sizeof(*block)); //create a block
     if(block == NULL){ //Check memory allocation was successful
         printf("(Block)--> Adding block to file - Allocation Error (1) \n");

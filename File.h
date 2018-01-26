@@ -90,7 +90,6 @@ typedef struct file_t *File;
  *
  */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size){
-    assert(file_sn > 0);
     File file = malloc(sizeof(*file));
     if(file == NULL){
         printf("(File)--> Creating block to file - Allocation Error (1) \n");
