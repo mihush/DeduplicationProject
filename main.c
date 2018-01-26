@@ -8,9 +8,9 @@
 #include <stdbool.h>
 
 
-/************************************************** Global Params**************************************************/
+/************************************************** Global Params *****************************************************/
 /* Serial number for counting the elements which insert to the system */
-unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
+unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
 
 /* Hash-Tables for blocks, files , directories */
 HashTable ht_files , ht_blocks , ht_dirs;
@@ -181,6 +181,10 @@ void update_parent_dir_sn(FILE* res_file, List previous , List current , int glo
     fprintf(res_file , "(update_parent_dir_sn) -->  Updating Parent directory serial numbers in depth %d ..... \n" , global_depth);
     if(global_depth == 0){ //We are at root Level directory just set everyone to be the children of root
         unsigned long root_sn = root_directory->dir_sn;
+        //Set root to be its own child
+        dir_set_parent_dir_sn(root_directory , root_sn);
+        dir_add_sub_dir(root_directory , root_sn);
+
         Dir temp_dir_root = (Dir)(ht_get(ht_dirs , root_directory->dir_id));
         //printf("(update_parent_dir_sn) --> First Level - Root is parent %lu ..... \n" , root_sn);
         //fprintf(res_file , "(update_parent_dir_sn) --> First Level - Root is parent %lu ..... \n" , root_sn);
@@ -254,18 +258,18 @@ void print_ht_to_CSV(char dedup_type){
     results_file = fopen(fileName , "w+");
 
     if(dedup_type == 'B'){
-        fprintf(results_file ,"Output type, block-level\n");
+        fprintf(results_file ,"# Output type: , block-level\n");
     } else {
-        fprintf(results_file ,"Output type, file-level\n");
+        fprintf(results_file ,"# Output type: , file-level\n");
     }
-    fprintf(results_file ,"Input files\n"); //TODO save names of input files
-    fprintf(results_file ,"Num files, %lu\n" , (files_sn-1));
-    fprintf(results_file ,"Num directories, %lu\n" , (dir_sn-1));
+    fprintf(results_file ,"# Input files: , input_example.txt\n"); //TODO save names of input files
+    fprintf(results_file ,"# Num files: , %lu\n" , (files_sn-1));
+    fprintf(results_file ,"# Num directories: , %lu\n" , (dir_sn-1));
     if(dedup_type == 'B'){
-        fprintf(results_file ,"Num Blocks, %lu\n", (blocks_sn - 1));
+        fprintf(results_file ,"# Num Blocks:, %lu\n", (blocks_sn - 1));
     } else {
         //TODO change this to physical files
-        fprintf(results_file ,"Num Blocks, %lu\n", (blocks_sn - 1));
+        fprintf(results_file ,"# Num physical files: , %lu\n", (blocks_sn - 1));
     }
 
     if(dedup_type == 'B'){ //Block level deduplication
@@ -379,7 +383,7 @@ int main(){
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /* ---------------------------------------------------------------------------------------- */
     /* -------------------- File Manipulations - Getting Files to Process  -------------------- */
-
+    /*
     printf("Please insert the path to the directory containing the input files: \n");
     scanf("%[^\n]s" , input_dir_start);
 
@@ -395,24 +399,28 @@ int main(){
     for (int i = 0; i < num_of_input_files ; ++i) {
         printf("Please insert the name of file %d : \n",(i+1));
         scanf("%s" , input_file_names[i]);
-    }
+    }*/
     /* -------------------- File Manipulations - Getting Files to Process  -------------------- */
     /* ---------------------------------------------------------------------------------------- */
     /* ------------------------- File Manipulations  - opening files  ------------------------- */
     /* Go Over each file, parsing the data into correspond structures */
     /* -------------------- Get File Names To Process -------------------- */
-
-
+    printf("(Parser)--> ----- Opening File ----- \n");
+    num_of_input_files = 1;
     /* michal files addresses */
     //input_file = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\input_example.txt" , "r");
     //res_file_1 = fopen("C:\\Users\\mihush\\Documents\\GitHub\\DeduplicationProject\\DeduplicationProject\\res_file_1.txt" , "w");
     /* Polina files addresses */
-    //input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
+    input_file = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\input_example.txt" , "r");
     res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
     /* Server files addresses */
     //input_file = fopen("/home/polinam/03_01/input_example.txt" , "r");
     //res_file_1 = fopen("/home/polinam/08_01_18/res_file_1.txt" , "w");
-
+    if(input_file == NULL){ //check the file was opened successfully - if not terminate
+        printf("%s\n",current_file_to_process);
+        printf("(Parser)--> Can't open input file/s =[ \n");
+        return 0;
+    }
 
     /* ------------------------- File Manipulations  - opening files  ------------------------- */
     /* ---------------------------------------------------------------------------------------- */
@@ -420,15 +428,6 @@ int main(){
 
     /* Go over all file systems */
     for (int i = 0; i < num_of_input_files ; ++i) {
-        printf("(Parser)--> ----- Opening File ----- \n");
-        current_file_to_process = malloc(sizeof(char)*(strlen(input_dir_start ) + strlen(input_file_names[i]) + 3));
-        strcat(current_file_to_process , input_dir_start);
-        strcat(current_file_to_process ,  input_file_names[i]);
-        input_file = fopen(current_file_to_process , "r");
-        if(input_file == NULL){ //check the file was opened successfully - if not terminate
-            printf("(Parser)--> Can't open input file/s =[ \n");
-            return 0;
-        }
         printf("(Parser)-->  ----- Start Reading the file ----- \n");
         /* Skip till the first empty line - over the file system description */
         do{
@@ -478,16 +477,17 @@ int main(){
                         break;
                     case 7: /* FILE ID */
                         object_id = case_7_hash_file_id(res_file_1 , buff , i);
-                        if ( ( obj_type == 'F' ) && ( is_zero_size_file == false )){ //Adding File Object to HashTable
+                        //Adding File Object to HashTable
+                        if ((obj_type == 'F') && (is_zero_size_file == false)){
                             file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F');
                             //add file to curr_depth_objects list in order to later find the parent directory
                             Object_Info oi_file = object_info_create(object_id , files_sn , parent_dir_id , 'F');
                             listInsertLast(curr_depth_objects , oi_file);
                             object_info_destroy(oi_file); //The list adds a copy of this object and it is no longer needed
                             files_sn++;
-                        }
-                        else if(obj_type == 'D'){ //Adding Directory Object to HashTable
-                            if( dir_sn == 1){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
+                        } //Adding Directory Object to HashTable
+                        else if(obj_type == 'D'){
+                            if( dir_sn == 0){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
                                 root_directory = ht_set(ht_dirs , parent_dir_id , -1 , dir_sn ,DIR_SIZE , 'D' );
                                 dir_sn++;
                             }
