@@ -10,7 +10,7 @@
 
 /************************************************** Global Params *****************************************************/
 /* Serial number for counting the elements which insert to the system */
-unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
+unsigned long blocks_sn = 1 , files_sn = 1 , dir_sn = 1;
 
 /* Hash-Tables for blocks, files , directories */
 HashTable ht_files , ht_blocks , ht_dirs;
@@ -107,38 +107,52 @@ char* case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_o
 }
 
 /* Line 13 is SV */
-void case_13_VS(File file_obj , FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_count , bool* read_empty_line_chucnks) {
+// returns true if a file was created
+void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_count ,
+                bool* read_empty_line_chucnks ,unsigned short depth, char* object_id, unsigned int file_size ,
+                bool* file_was_created, bool* finished_process_blocks) {
     /* Params initialization */
+    bool read_block = false;
     *read_empty_line_chucnks = false;
     char block_id[BLOCK_ID_LEN];
     unsigned int block_size = 0;
 
-    fgets(buff, BUFFER_SIZE, input_file);
-    (*block_line_count)++;
-
-    switch ((int) (buff[0])) { //check next line
-        case 'V':
+    while((read_block == false) && (*read_empty_line_chucnks == false)){
+        printf("----- %d\n",*block_line_count);
+        printf("--> %s \n", buff);
+        switch ((int)(buff[0])) { //check next line
+            case 'S':
+                break;
+            case 'V':
+                break;
+            case 'A':
+                break;
+                /* Empty line */
+            case LINE_SPACE :
+                *read_empty_line_chucnks = true;
+                break;
+                /* Data chunk */
+            default:
+                read_block = true;
+                break;
+        }
+        if((*read_empty_line_chucnks != true)&&(read_block != true)){
             fgets(buff, BUFFER_SIZE, input_file);
             (*block_line_count)++;
-            /* Check if this line is empty or data chunk */
-            if ((int) (buff[0]) == LINE_SPACE) {
-                *read_empty_line_chucnks = true;
-            }
-            //TODO Read all V lines
-            break;
-            /* Empty line */
-        case LINE_SPACE :
-            *read_empty_line_chucnks = true;
-            break;
-            /* Data chunk */
-        default:
-            break;
+        }
     }
     if (*read_empty_line_chucnks == true) {
         return;
     }
+    // If we got here it means we have blocks to read
+    // Add file to files hashtable
+    File file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F');
+    files_sn++;
+    *file_was_created = true;
+    printf("-> FILE : %s\n", object_id);
+
     /* Read all data chunks */
-    if ((int) (buff[0]) != CHUNKE_ID_LEN) {
+    if ((int)(buff[0]) != LINE_SPACE) {
         //we already have one chunk in the buffer
         do {
             char size[CHUNKE_SIZE_LEN];
@@ -160,12 +174,13 @@ void case_13_VS(File file_obj , FILE* res_file , FILE *input_file , char buff[BU
             file_add_block(file_obj , block_id , block_size);
             Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B');
             block_add_file(new_block , file_obj->file_id);
-            blocks_sn++;
+            blocks_sn++; // TODO if block already exists do not increase !!!
             //fprintf(res_file, "--> Block  - %s - %d \n", block_id, block_size);
             fgets(buff, BUFFER_SIZE, input_file);
             (*block_line_count)++;
         } while (strlen(buff) > 1);
     }
+    *finished_process_blocks=true;
     return;
 }
 
@@ -352,6 +367,7 @@ int main(){
     FILE *input_file , *res_file_1;
     char buff[BUFFER_SIZE];
     bool read_empty_line_chucnks = false;
+    bool finished_process_blocks = false;
     int block_line_count = 0;
 
     /// Initialize Global Variables
@@ -375,9 +391,10 @@ int main(){
     unsigned int file_size = 0; //File Size (if the object is a file)
     char obj_type = 'Z'; //Hexadecimal Value - Tells the type of the object ( A combination of binary flags set)
     char* object_id = NULL; //Hashed ID of the current object
-    File file_obj = NULL; //Pointer to the FILE Object to be created from the current input
-    Dir dir_obj = NULL; //Pointer to the DIRECTORY Object to be created from the current input
+    //File file_obj = NULL; //Pointer to the FILE Object to be created from the current input
+    //Dir dir_obj = NULL; //Pointer to the DIRECTORY Object to be created from the current input
     bool is_zero_size_file = false;
+    bool file_was_created = false;
 
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /* ---------------------------------------------------------------------------------------- */
@@ -476,43 +493,42 @@ int main(){
                         break;
                     case 7: /* FILE ID */
                         object_id = case_7_hash_file_id(res_file_1 , buff , i);
-                        //Adding File Object to HashTable
-                        if ((obj_type == 'F') && (is_zero_size_file == false)){
-                            file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F');
-                            //add file to curr_depth_objects list in order to later find the parent directory
-                            Object_Info oi_file = object_info_create(object_id , files_sn , parent_dir_id , 'F');
-                            listInsertLast(curr_depth_objects , oi_file);
-                            object_info_destroy(oi_file); //The list adds a copy of this object and it is no longer needed
-                            files_sn++;
-                        } //Adding Directory Object to HashTable
-                        else if(obj_type == 'D'){
-                            if( dir_sn == 0){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
+//                        //Adding File Object to HashTable
+//                        if ((obj_type == 'F') && (is_zero_size_file == false)){
+//                            file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F');
+//                            files_sn++;
+//                        }
+                        //Adding Directory Object to HashTable
+                        if(obj_type == 'D'){
+                            if( dir_sn == 1){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
                                 root_directory = ht_set(ht_dirs , parent_dir_id , -1 , dir_sn ,DIR_SIZE , 'D' );
                                 dir_sn++;
                             }
-
                             //Create Directory Object with the retrieved data
                             ht_set(ht_dirs, object_id, depth, dir_sn, DIR_SIZE , 'D');
-                            //add file to curr_depth_objects list in order to later find the parent directory
-                            Object_Info oi_dir = object_info_create(object_id , dir_sn , parent_dir_id , 'D');
-                            listInsertLast(curr_depth_objects , oi_dir);
-                            object_info_destroy(oi_dir); //The list adds a copy of this object and it is no longer needed
                             dir_sn++;
                         }
                         break;
                     case 13: /* Line 13 is SV */
-                        case_13_VS(file_obj , res_file_1 , input_file , buff , &block_line_count , &read_empty_line_chucnks);
-                        if (obj_type == 'F'){ //If there are no blocks in a non-zero size file
-                            //remove from hash table
-
-                            //decrease the file_sn counter
-                            files_sn--;
+                        case_13_VS(res_file_1 , input_file , buff , &block_line_count ,
+                                   &read_empty_line_chucnks , depth , object_id,file_size,
+                                   &file_was_created, &finished_process_blocks);
+                        // Add object (File or Directory) to curr_depth_objects list
+                        if ((obj_type == 'F') && (is_zero_size_file == false) && (file_was_created == true)){
+                            Object_Info oi_file = object_info_create(object_id , files_sn , parent_dir_id , 'F');
+                            listInsertLast(curr_depth_objects , oi_file);
+                            object_info_destroy(oi_file); //The list adds a copy of this object and it is no longer needed
+                        } else if(obj_type == 'D'){ //Adding Directory Object to HashTable
+                            //add directory to curr_depth_objects list in order to later find the parent directory
+                            Object_Info oi_dir = object_info_create(object_id , dir_sn , parent_dir_id , 'D');
+                            listInsertLast(curr_depth_objects , oi_dir);
+                            object_info_destroy(oi_dir); //The list adds a copy of this object and it is no longer needed
                         }
                         break;
                     default:
                         break;
                 }
-                /* Find data chunks */
+
                 if(read_empty_line_chucnks == false){
                     fgets(buff, BUFFER_SIZE , input_file); //read next line in current block
                     block_line_count++;
@@ -525,11 +541,12 @@ int main(){
                 /* Zero the line count for the next block */
                 block_line_count = 0;
                 read_empty_line_chucnks = false;
-                file_obj = NULL;
+                //file_obj = NULL;
                 //dir_obj = NULL;
                 is_zero_size_file = false;
                 free(parent_dir_id);
                 free(object_id);
+                file_was_created = false;
             }
         }
         free(current_file_to_process);

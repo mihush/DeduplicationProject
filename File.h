@@ -160,6 +160,14 @@ unsigned int file_get_depth(File file){
     return file->file_depth;
 }
 
+/*
+ *  file_get_num_blocks - returns the number of blocks the file contains
+ */
+int file_get_num_blocks(File file){
+    assert(file);
+    return file->num_blocks;
+}
+
 ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
     assert(file);
     file->dir_sn = dir_sn;

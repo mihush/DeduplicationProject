@@ -215,34 +215,6 @@ Data ht_get( HashTable ht, char *key ) {
 }
 
 /*
- *
- */
-//void ht_remove(HashTable ht, char* key){
-//    long int hash_key = ht_hash(ht, key);
-//    Entry pair = ht->table[hash_key];
-//    //Check if the value to delete is the first one
-//    if(strcmp(key , pair->key) == 0){
-//        Entry temp_pair = pair;
-//        pair = pair_next;
-//        return;
-//    }
-//    /* Step through the hash_key, looking for our value. */
-//    while( pair != NULL && pair->key != NULL && strcmp( key, pair->key ) != 0 ) {
-//        pair = pair->next;
-//    }
-//
-//    /* Did we actually find anything? */
-//    if( pair == NULL || pair->key == NULL || strcmp( key, pair->key ) != 0 ) {
-//        //didn't find anything
-//        return NULL;
-//
-//    }
-//
-//    //remove the object
-//
-//}
-
-/*
  * Destroy the data obj
  */
 void data_destroy(Data data, char flag){
@@ -283,7 +255,6 @@ void hashTable_destroy(HashTable ht , char flag){
     free(ht->table);
     free(ht);
 }
-
 
 /* **************** END *************** HashTable Functions **************** END ***************** */
 
