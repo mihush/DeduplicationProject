@@ -31,6 +31,7 @@ typedef enum{
 #define CHUNKE_SIZE_LEN 6
 #define DIR_SIZE 0
 #define FILE_ATTRIBUTE_DIRECTORY 0x00000010
+#define ROOT_ID_LEN 8
 
 /* **************** START **************** object_info struct **************** START **************** */
 

@@ -151,7 +151,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
 /*
  * ht_set - Insert a key-value pair into a hash table.
  */
-Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag) {
+Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag, bool* object_exists) {
     Entry newpair = NULL;
     Entry next = NULL;
     Entry last = NULL;
@@ -168,6 +168,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
     /* There's already a pair. Let's replace that string. */
     if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
         //Return the pointer to the Block/File that already exists in the hash
+        *object_exists = true;
         return next->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
         newpair = ht_newpair(key, depth , sn, size, flag ); //allocate new pair
