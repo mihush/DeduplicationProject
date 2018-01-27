@@ -10,49 +10,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
-/* **************** START **************** block_info struct **************** START **************** */
-/*
- * Definition of a block info structure:
- *                  - block_sn -> a running index on all blocks read from the file system
- *                  - block_id -> a hushed id as appears in the input file
- *                  - block_size -> the size of a block
- *                  - shared_by_num_files -> number of files sharing this block
- *                  - files_list -> list of hashed file ids containing this block
- */
-struct block_info{ //helper struct
-    int size;
-    char* id; // block id
-};
-typedef struct block_info* Block_Info;
 
-static ListElement copy_block_info(ListElement block_info){
-    assert(block_info);
-    Block_Info bi = (Block_Info)(block_info);
-    Block_Info bi_copy = malloc(sizeof(*bi_copy));
-    if(bi_copy == NULL){
-        return NULL;
-    }
-
-    bi_copy->size = bi->size;
-    bi_copy->id = malloc(sizeof(char)*(strlen(bi->id) +1));
-    if(bi_copy->id == NULL){
-        free(bi_copy);
-        return NULL;
-    }
-    strcpy(bi_copy->id , bi->id);
-    return bi_copy;
-
-}
-
-static void free_block_info(ListElement block_info){
-    free(((Block_Info)(block_info))->id);
-    free(block_info);
-}
-
-/* ***************** END ***************** block_info struct ***************** END ***************** */
 /* ************************************************************************************************* */
 /* ************************************************************************************************* */
 /* *************** START ************** File STRUCT Definition *************** START *************** */
@@ -74,6 +34,8 @@ struct file_t{
     int num_blocks;
     unsigned int file_size;
     List blocks_list;
+    unsigned long physical_sn;
+    unsigned long physical_size;
 };
 typedef struct file_t *File;
 
@@ -109,6 +71,8 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
     file->num_blocks = 0;
     file->file_depth = depth;
     file->file_size = size;
+    file->physical_sn = 0;
+    file->physical_size = 0;
 
     file->blocks_list = listCreate(copy_block_info , free_block_info);
     if(file->blocks_list == NULL){
@@ -117,11 +81,6 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
         free(file);
         return NULL;
     }
-//    printf("(File)--> Created File Sucessfully:\n");
-//    printf("              - SN    : %lu \n" , file->file_sn);
-//    printf("              - ID    : %s \n" , file->file_id);
-//    printf("              - Size  : %d \n" , file->file_size);
-//    printf("              - Depth : %d \n" , file->file_depth);
     return file;
 }
 
@@ -173,6 +132,13 @@ ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
     file->dir_sn = dir_sn;
     return SUCCESS;
 }
+
+ErrorCode file_set_physical_sn(File file , unsigned long physical_file_sn){
+    assert(file);
+    file->physical_sn = physical_file_sn;
+    return SUCCESS;
+}
+
 /*
  *
  */
@@ -194,7 +160,7 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     }
     strcpy(bi->id , block_id);
     bi->size = block_size;
-
+    file->physical_size += block_size;
     ListResult res = listInsertLast(file->blocks_list , bi);
 
     if(res != LIST_SUCCESS){
@@ -206,10 +172,6 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     (file->num_blocks)++;
     free(bi->id);
     free(bi);
-//    printf("(File)--> Contained Block was added to File Sucessfully:\n");
-//    printf("            - File  SN     : %lu \n" , file->file_sn);
-//    printf("            - Block ID     : %s \n" , block_id);
-//    printf("            - Block size   : %d \n" , block_size);
     return SUCCESS;
 }
 

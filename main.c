@@ -6,17 +6,19 @@
 #include "Utilities.h"
 #include "HashTable.h"
 
+
 /************************************************** Global Params *****************************************************/
 #define NUM_INPUT_FILES 1
+#define DEDUP_TYPE B
+
 /* Serial number for counting the elements which insert to the system */
 unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
 
 /* Hash-Tables for blocks, files , directories */
-HashTable ht_files , ht_blocks , ht_dirs;
+HashTable ht_files , ht_blocks , ht_dirs , ht_p_files;
 
 /* Root Directory */
 Dir roots[NUM_INPUT_FILES];
-//Dir root_directory;
 
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
@@ -180,24 +182,30 @@ void update_parent_dir_sn(FILE* res_file, List previous , List current , int glo
 
     fprintf(res_file , "(update_parent_dir_sn) -->  Updating Parent directory serial numbers in depth %d ..... \n" , global_depth);
     if(global_depth == 0){ //We are at root Level directory just set everyone to be the children of root
+        printf("Updating roots Children .... \n");
+        printf("depth is : %d \n" , global_depth);
         //unsigned long root_sn = root_directory->dir_sn;
         unsigned long root_sn = roots[input_file_index]->dir_sn;
         //Set root to be its own child
         dir_set_parent_dir_sn(roots[input_file_index] , root_sn);
         dir_add_sub_dir(roots[input_file_index] , root_sn);
 
-        Dir temp_dir_root = (Dir)(ht_get(ht_dirs , roots[input_file_index]->dir_id));
+        //Dir temp_dir_root = (Dir)(ht_get(ht_dirs , roots[input_file_index]->dir_id));
+
         LIST_FOREACH(Object_Info , iter ,current){
             if(iter->object_type == 'F'){
                 temp_file = (File)(ht_get(ht_files , iter->object_id));
                 assert(temp_file);
                 file_set_parent_dir_sn(temp_file ,root_sn);
-                dir_add_file(temp_dir_root,temp_file->file_sn);
+                //dir_add_file(temp_dir_root,temp_file->file_sn);
+                dir_add_file(roots[input_file_index],temp_file->file_sn);
+
             } else{
                 temp_dir = (Dir)(ht_get(ht_dirs , iter->object_id));
                 assert(temp_dir);
                 dir_set_parent_dir_sn(temp_dir , root_sn);
-                dir_add_sub_dir(temp_dir_root,temp_dir->dir_sn);
+                //dir_add_sub_dir(temp_dir_root,temp_dir->dir_sn);
+                dir_add_sub_dir(roots[input_file_index],temp_dir->dir_sn);
             }
         }
         //temp_oi = listGetFirst(current);//Just in order to reset the iterator of the current list to the beginning
@@ -250,8 +258,19 @@ void update_parent_dir_sn(FILE* res_file, List previous , List current , int glo
 void print_ht_to_CSV(char dedup_type , char** files_to_read){
     Entry pair = NULL;
     FILE *results_file = NULL;
-    char* fileName = malloc(sizeof(char)*21);
-    sprintf(fileName , "Parsing_Results.csv");
+    char* fileName = calloc(777 , sizeof(char));
+    strcpy(fileName , "Parsing_Results_");
+
+    for(int i =0 ; i < NUM_INPUT_FILES ; i++){
+        char file_proc[5];
+        strncpy(file_proc , files_to_read[i] , 4);
+        file_proc[5] = '\0';
+        strcat(fileName, file_proc);
+        if(i < NUM_INPUT_FILES -1){
+            strcat(fileName , "_");
+        }
+    }
+    strcat(fileName , ".csv");
     results_file = fopen(fileName , "w+");
 
     if(dedup_type == 'B'){
@@ -360,6 +379,7 @@ int main(){
     ht_files = ht_create('F');
     ht_blocks = ht_create('B');
     ht_dirs = ht_create('D');
+    ht_p_files = ht_create('P');
     if(ht_files == NULL || ht_blocks == NULL || ht_dirs == NULL){
         printf("(Parser)--> Failed Allocating Hash Tables in parser =[ \n");
         return 0;
@@ -374,9 +394,10 @@ int main(){
 
     /// Define Files to be read
     char* files_to_read[NUM_INPUT_FILES];
+    //char* current_working_directory  = "/home/polinam/27_01_18/";
     char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
     //files_to_read[0] = "0125.txt";
-    files_to_read[0] = "0119.txt";
+    files_to_read[0] = "0119";
     char* current_file = NULL;
     bool finished_reading_file = false;
 
@@ -396,6 +417,7 @@ int main(){
     /* ---------------------------------------------------------------------------------------- */
     /* ------------------------------------- File Reading ------------------------------------- */
     res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+    //res_file_1 = fopen("/home/polinam/27_01_18/res_file.txt" , "w");
     /* Go over all file systems */
     for (int i = 0; i < NUM_INPUT_FILES ; ++i) { /* (1) Read an Input File */
         printf("(Parser)--> ----- Opening File ----- \n");

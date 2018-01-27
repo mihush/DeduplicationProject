@@ -18,13 +18,11 @@
 #include "Directory.h"
 
 /****************************** DEFINES *****************************/
-#define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
-//TODO Set Correct Sizes
 #define BLOCKS_INIT_SIZE 20000
 #define FILES_INIT_SIZE 10000
 #define DIRS_INIT_SIZE 6000
-#define BLOCKS_IN_FILE_SIZE 300
+#define PHYSICAL_FILES_SIZE 10000
 typedef void* Data;
 
 struct entry_t {
@@ -45,10 +43,9 @@ typedef struct hashtable_t *HashTable;
 /* *********************************************************************************************** */
 /* *********************************************************************************************** */
 /* *************** START ************** HashTable Functions *************** START **************** */
-/* Create a new HashTable. */
+/* Create a new HashTable */
 HashTable ht_create(char type) {
     HashTable ht = NULL;
-
     /* Allocate the table itself */
     ht = malloc(sizeof(*ht));
     if(!ht){ //check allocation was successful
@@ -56,17 +53,17 @@ HashTable ht_create(char type) {
         return NULL;
     }
     switch(type){
-        case 'B':
+        case 'B': //Blocks
             ht->size_table = BLOCKS_INIT_SIZE;
             break;
-        case 'F':
+        case 'F': //Logical Files
             ht->size_table = FILES_INIT_SIZE;
             break;
-        case 'D':
+        case 'D': //Directories
             ht->size_table = DIRS_INIT_SIZE;
             break;
-        case 'N': //for Hashtable in file object
-            ht->size_table = BLOCKS_IN_FILE_SIZE;
+        case 'P': //Physical Files
+            ht->size_table = PHYSICAL_FILES_SIZE;
             break;
         default:
             ht->size_table = INIT_SIZE; //Shouldn't really get here
@@ -229,6 +226,7 @@ void data_destroy(Data data, char flag){
         case 'B':
             block_destroy((Block)data);
             break;
+        //TODO add case of Physical file
     }
 }
 
@@ -237,7 +235,7 @@ void data_destroy(Data data, char flag){
  */
 void hashTable_destroy(HashTable ht , char flag){
     long num_of_elements = ht->num_of_elements;
-    long size_of_lists = 0;
+    //long size_of_lists = 0;
     struct entry_t* temp_to_free;
     // Remove lists elements of each HashTable cell
     for(int i = 0 ; i < num_of_elements ; i++){

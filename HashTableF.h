@@ -181,7 +181,7 @@ DataF ht_getF(HashTableF ht, char *key ) {
  */
 void hashTableF_destroy(HashTableF ht){
     long num_of_elements = ht->num_of_elements;
-    long size_of_lists = 0;
+    //long size_of_lists = 0;
     struct entryf_t* temp_to_free;
     // Remove lists elements of each HashTable cell
     for(int i = 0 ; i < num_of_elements ; i++){

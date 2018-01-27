@@ -122,5 +122,44 @@ static void object_info_destroy(ListElement object_info){
 
 
 /* ***************** END ***************** object_info struct ***************** END ***************** */
+/* **************** START **************** block_info struct **************** START **************** */
+/*
+ * Definition of a block info structure:
+ *                  - block_sn -> a running index on all blocks read from the file system
+ *                  - block_id -> a hushed id as appears in the input file
+ *                  - block_size -> the size of a block
+ *                  - shared_by_num_files -> number of files sharing this block
+ *                  - files_list -> list of hashed file ids containing this block
+ */
+struct block_info{ //helper struct
+    int size;
+    char* id; // block id
+};
+typedef struct block_info* Block_Info;
 
+static ListElement copy_block_info(ListElement block_info){
+    assert(block_info);
+    Block_Info bi = (Block_Info)(block_info);
+    Block_Info bi_copy = malloc(sizeof(*bi_copy));
+    if(bi_copy == NULL){
+        return NULL;
+    }
+
+    bi_copy->size = bi->size;
+    bi_copy->id = malloc(sizeof(char)*(strlen(bi->id) +1));
+    if(bi_copy->id == NULL){
+        free(bi_copy);
+        return NULL;
+    }
+    strcpy(bi_copy->id , bi->id);
+    return bi_copy;
+
+}
+
+static void free_block_info(ListElement block_info){
+    free(((Block_Info)(block_info))->id);
+    free(block_info);
+}
+
+/* ***************** END ***************** block_info struct ***************** END ***************** */
 #endif //DEDUPLICATIONPROJECT_UTILITIES_H
