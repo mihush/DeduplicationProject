@@ -61,11 +61,6 @@ Block block_create(char* block_id , unsigned long block_sn , unsigned int block_
         free(block);
         return NULL;
     }
-
-//    printf("(Block)--> Created Block Sucessfully:\n");
-//    printf("            - SN   : %lu \n" , block->block_sn);
-//    printf("            - ID   : %s \n" , block->block_id);
-//    printf("            - Size : %d \n" , block->block_size);
     return block;
 }
 

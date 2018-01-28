@@ -27,6 +27,7 @@
  *                  - blocks_list -> List of Block_info elements of blocks contained in the file
  */
 struct file_t{
+    char flag; // L - logical_file , P - physical_file
     unsigned long file_sn;
     char* file_id;
     unsigned int file_depth;
@@ -34,8 +35,10 @@ struct file_t{
     int num_blocks;
     unsigned int file_size;
     List blocks_list;
+    HashTableF files_ht; // should be use only for flag = 'P'
+    unsigned int num_files; // should be use only for flag = 'P'
     unsigned long physical_sn;
-    unsigned long physical_size;
+
 };
 typedef struct file_t *File;
 
@@ -51,16 +54,16 @@ typedef struct file_t *File;
  *                      - dir sn
  *
  */
-File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size){
+File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size , unsigned long physical_sn){
     File file = malloc(sizeof(*file));
     if(file == NULL){
-        printf("(File)--> Creating block to file - Allocation Error (1) \n");
+        printf("(File)--> Creating file - Allocation Error (1) \n");
         return NULL;
     }
 
     file->file_id = malloc(sizeof(char)* (FILE_ID_LEN + 1));
     if(file->file_id == NULL){
-        printf("(File)--> Adding block to file - Allocation Error (2) \n");
+        printf("(File)--> Creating file - Allocation Error (2) \n");
         free(file);
         return NULL;
     }
@@ -71,8 +74,9 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
     file->num_blocks = 0;
     file->file_depth = depth;
     file->file_size = size;
-    file->physical_sn = 0;
-    file->physical_size = 0;
+    file->num_files = 1;
+    file->flag = 'P';
+    file->physical_sn = physical_sn; // will be updated from file_compare
 
     file->blocks_list = listCreate(copy_block_info , free_block_info);
     if(file->blocks_list == NULL){
@@ -81,6 +85,16 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
         free(file);
         return NULL;
     }
+
+    file->files_ht = ht_createF('N');
+    if(file->files_ht == NULL){
+        free(file->file_id);
+        listDestroy(file->blocks_list);
+        free(file);
+        return NULL;
+    }
+
+    ht_setF(file->files_ht, file_id);
     return file;
 }
 
@@ -142,6 +156,15 @@ ErrorCode file_set_physical_sn(File file , unsigned long physical_file_sn){
 /*
  *
  */
+ErrorCode file_set_logical_flag(File file){
+    file->flag = 'L';
+    return SUCCESS;
+}
+
+
+/*
+ *
+ */
 ErrorCode file_add_block(File file , char* block_id , int block_size){
     if(file == NULL || block_id == NULL || block_size < 0){
         return INVALID_INPUT;
@@ -160,7 +183,6 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     }
     strcpy(bi->id , block_id);
     bi->size = block_size;
-    file->physical_size += block_size;
     ListResult res = listInsertLast(file->blocks_list , bi);
 
     if(res != LIST_SUCCESS){
@@ -169,16 +191,13 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
         free(bi);
         return OUT_OF_MEMORY;
     }
+
     (file->num_blocks)++;
     free(bi->id);
     free(bi);
     return SUCCESS;
 }
 
-//TODO compare between two files (files are considered identical if have the same blocks)
-// 1 - check sizes
-// 2 - check amount of blocks
-// 3 - check first block , second block, etc ....
 
 /* **************** END *************** File STRUCT Functions **************** END ***************** */
 

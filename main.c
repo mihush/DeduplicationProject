@@ -2,24 +2,23 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "Utilities.h"
 #include "HashTable.h"
 
 
 /************************************************** Global Params *****************************************************/
 #define NUM_INPUT_FILES 1
-#define DEDUP_TYPE B
 
 /* Serial number for counting the elements which insert to the system */
-unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
+// files_sn is the logical sn-number
+unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0, physical_files_sn = 0;
 
 /* Hash-Tables for blocks, files , directories */
-HashTable ht_files , ht_blocks , ht_dirs , ht_p_files;
+HashTable ht_files , ht_blocks , ht_dirs ;
 
 /* Root Directory */
 Dir roots[NUM_INPUT_FILES];
-
+char dedup_type = 'F';
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
 bool check_12_z(char buff[STR_OF_Z]){
@@ -132,8 +131,9 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
     }
     // If we got here it means we have blocks to read - Add file to files hashtable
 
-    File file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F', &object_exists);
-    files_sn++;
+    File file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F', &object_exists , physical_files_sn);
+    files_sn++; // logical_files_sn
+    physical_files_sn++;
     *file_was_created = true;
     object_exists = false;
 
@@ -159,7 +159,7 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
             printf("%s\n" , file_obj->file_id);
             printf("%s\n", block_id);
             file_add_block(file_obj , block_id , block_size);
-            Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B', &object_exists);
+            Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B', &object_exists , 0);
             block_add_file(new_block , file_obj->file_id);
             printf("%s\n", new_block->block_id);
             if(object_exists == false){
@@ -172,6 +172,15 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
         } while (strlen(buff) > 1);
     }
     *finished_process_blocks = true;
+    // Check if physical file already exists
+    //TODO Correct This
+    if(dedup_type == 'F'){
+        bool result = file_compare(ht_files , file_obj, &physical_files_sn);
+        if(result == true){
+            printf("Yesss madafacc...-----> Physical file already exists\n");
+
+        }
+    }
     return;
 }
 
@@ -335,6 +344,42 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
         }
     }else{
         printf("File Level Dedup\n");
+        //Print physical files
+        for(int i = 0 ; i < (ht_files->size_table) ;i++){
+            pair = ht_files->table[i];
+            while( pair != NULL && pair->key != NULL) {
+                File temp_file = ((File)(pair->data));
+                if(temp_file->flag != 'P'){
+                    pair = pair->next;
+                    continue;
+                }
+                fprintf(results_file , "P, %lu, %s, %d,",
+                        temp_file->physical_sn, temp_file->file_id ,
+                        temp_file->num_files);
+                for(int j = 0 ; j < (temp_file->files_ht->size_table) ; j++){
+                    EntryF pair_file_id = temp_file->files_ht->table[j];
+                    while( pair_file_id != NULL && pair_file_id->key != NULL) {
+                        unsigned long file_sn = ((File)(ht_get(ht_files , pair_file_id->key)))->file_sn;
+                        fprintf(results_file ,"%lu," , file_sn);
+                        pair_file_id = pair_file_id->next;
+                    }
+                }
+                fprintf(results_file ,"\n");
+                pair = pair->next;
+            }
+        }
+
+        //Print logical files
+        for(int i = 0 ; i < (ht_files->size_table) ;i++){
+            pair = ht_files->table[i];
+            while( pair != NULL && pair->key != NULL) {
+                File temp_file = ((File)(pair->data));
+                fprintf(results_file , "F, %lu, %s, %lu, %d, %lu, %d\n",
+                        temp_file->file_sn, temp_file->file_id , temp_file->dir_sn,
+                        1, temp_file->physical_sn, temp_file->file_size);
+                pair = pair->next;
+            }
+        }
     }
 
     //Print Directories
@@ -379,7 +424,6 @@ int main(){
     ht_files = ht_create('F');
     ht_blocks = ht_create('B');
     ht_dirs = ht_create('D');
-    ht_p_files = ht_create('P');
     if(ht_files == NULL || ht_blocks == NULL || ht_dirs == NULL){
         printf("(Parser)--> Failed Allocating Hash Tables in parser =[ \n");
         return 0;
@@ -396,8 +440,8 @@ int main(){
     char* files_to_read[NUM_INPUT_FILES];
     //char* current_working_directory  = "/home/polinam/27_01_18/";
     char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
-    //files_to_read[0] = "0125.txt";
-    files_to_read[0] = "0119";
+    files_to_read[0] = "input_example";
+    //files_to_read[1] = "0119";
     char* current_file = NULL;
     bool finished_reading_file = false;
 
@@ -492,14 +536,14 @@ int main(){
                                 root_id[1] = '_';
                                 strncpy((root_id + 2) , "root" , 4);
                                 root_id[7] = '\0';
-                                roots[i] = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already);
+                                roots[i] = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already , 0);
                                 //root_directory = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already);
                                 dir_sn++;
                                 free(root_id);
                                 set_root = false;
                             }
                             //Create Directory Object with the retrieved data
-                            ht_set(ht_dirs, object_id, depth, dir_sn, DIR_SIZE , 'D' , &object_exists_in_hash_already);
+                            ht_set(ht_dirs, object_id, depth, dir_sn, DIR_SIZE , 'D' , &object_exists_in_hash_already , 0);
                             dir_sn++;
                         }
                         break;
@@ -567,7 +611,7 @@ int main(){
     fclose(res_file_1); ///Cloes the Results file
 
     printf("(Parser) --> Printing Results ................\n");
-    print_ht_to_CSV('B' , files_to_read);
+    print_ht_to_CSV(dedup_type, files_to_read);
 
     //Free All Hash tables and Lists
     hashTable_destroy(ht_files , 'F');

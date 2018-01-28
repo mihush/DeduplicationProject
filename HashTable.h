@@ -62,9 +62,6 @@ HashTable ht_create(char type) {
         case 'D': //Directories
             ht->size_table = DIRS_INIT_SIZE;
             break;
-        case 'P': //Physical Files
-            ht->size_table = PHYSICAL_FILES_SIZE;
-            break;
         default:
             ht->size_table = INIT_SIZE; //Shouldn't really get here
             break;
@@ -108,7 +105,8 @@ long int ht_hash( HashTable ht, char *key ) {
  *                  - For block - size parameter will contain the block size
  *                  - For File - size parameter will be -1
  */
-Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag){
+Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag ,
+                 unsigned long physical_sn){
     Entry newpair  = malloc(sizeof(*newpair));
     if(newpair == NULL){
         printf("(HashTable)--> Creating new pair - Allocation Error (1) \n");
@@ -132,7 +130,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     }
     else if(flag == 'F'){ //This is a file object
         printf("(HashTable)--> Creating new pair - FILE \n");
-        newpair->data = file_create(key , depth , sn , size);
+        newpair->data = file_create(key , depth , sn , size , physical_sn);
     }
 
     if(newpair->data == NULL) {
@@ -148,7 +146,8 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
 /*
  * ht_set - Insert a key-value pair into a hash table.
  */
-Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag, bool* object_exists) {
+Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag, bool* object_exists ,
+            unsigned long physical_sn) {
     Entry newpair = NULL;
     Entry next = NULL;
     Entry last = NULL;
@@ -168,7 +167,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
         *object_exists = true;
         return next->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
-        newpair = ht_newpair(key, depth , sn, size, flag ); //allocate new pair
+        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn); //allocate new pair
         if(newpair == NULL){
             printf("(HashTable)--> Adding Pair to HT - Allocation Error (1) \n");
             return NULL;
@@ -254,6 +253,70 @@ void hashTable_destroy(HashTable ht , char flag){
     free(ht->table);
     free(ht);
 }
+
+/*
+ * file_compare_to_File - files are considered identical if have the same blocks
+ *                          1 - check sizes
+ *                          2 - check amount of blocks
+ *                          3 - check first block , second block, etc ....
+ */
+//TODO compare between two files (files are considered identical if have the same blocks)
+bool file_compare(HashTable ht_files,  File file, unsigned long* physical_files_sn){
+    assert(file);
+    Entry pair = NULL;
+    bool physical_file_exist = true;
+    printf("File to check is: %s \n", file->file_id);
+    for(int i = 0 ; i < (ht_files->size_table) ;i++){
+        pair = ht_files->table[i];
+        while( pair != NULL && pair->key != NULL) {
+            File temp_file = ((File)(pair->data));
+            printf("Current file checked is: %s\n", temp_file->file_id);
+            if(strcmp(file->file_id , temp_file->file_id) == 0){ //It's the same file
+                pair = pair->next;
+                continue;
+            }
+            //Compare by sizes
+            if(file->file_size != temp_file->file_size){
+                pair = pair->next;
+                continue;
+            }
+            printf("---> sizes are the same\n");
+            //Compare by amount of blocks
+            if(file->num_blocks != temp_file->num_blocks){
+                pair = pair->next;
+                continue;
+            }
+            printf("---> Amount of blocks is the same\n");
+
+            //Compare each block
+            Object_Info temp_oi;
+            Block_Info temp_file_blocks = listGetFirst(temp_file->blocks_list);
+            LIST_FOREACH(Block_Info , iter ,file->blocks_list){
+                if(strcmp(iter->id , temp_file_blocks->id) != 0){
+                    temp_oi = listGetFirst(temp_file->blocks_list);
+                    temp_oi = listGetFirst(file->blocks_list);
+                    physical_file_exist = false;
+                    break;
+                }
+                temp_file_blocks = listGetNext(temp_file->blocks_list);
+            }
+            temp_oi = listGetFirst(temp_file->blocks_list);
+            temp_oi = listGetFirst(file->blocks_list);
+            if(physical_file_exist == true) { // physical file already exits
+                printf("---> found an identical file\n");
+                file_set_logical_flag(file);
+                ht_setF(temp_file->files_ht, file->file_id);
+                (temp_file->num_files)++;
+                file_set_physical_sn(file , temp_file->physical_sn);
+                (*physical_files_sn)--;
+            }
+            pair = pair->next;
+        }
+    }
+
+    return true;
+}
+
 
 /* **************** END *************** HashTable Functions **************** END ***************** */
 
