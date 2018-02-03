@@ -323,23 +323,20 @@ void hashTable_destroy(HashTable ht , char flag){
 //    return true;
 //}
 
-Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
+Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,File file_obj_p,
                   unsigned long* physical_files_sn){
-    assert(file);
-    bool physical_file_exist = false;
-    bool blocks_differ = false;
-
-
+    assert(file && file_obj_p);
+    File temp_file = NULL;
+    bool physical_file_exist = false ,  blocks_differ = false;
     Block_Info first_block = (Block_Info)listGetFirst(file->blocks_list);
     char* first_block_id = first_block->id;
     long int hash_key = ht_hash(ht_physical_files , first_block_id);
     printf("--> File to check is: %s \n", file->file_id);
-    printf("---> first block id is: %s \n", first_block_id);
+    printf("----> first block id is: %s \n", first_block_id);
+
     Entry current = ht_physical_files->table[hash_key]; //get the cell int the hashtable for the possible file
-    File temp_file = NULL;
     if(current == NULL){
-        printf("---> hashing key is : %d\n" , hash_key);
-        printf(" The list is empty =[ \n");
+        printf("---> hashing key is : %d\nThe list is empty =[ \n" , hash_key);
     }
     //go over all files in the cell found above
     while(current != NULL && current->key != NULL){
@@ -382,11 +379,10 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
             physical_file_exist = true;
             break;
         }
-    }
+    } /* Finished searching for a physical file*/
 
-    //-------------------- Adding the file to hash table -----------------------------
+    /*-------------------- Adding the file to hash table -----------------------------*/
     if(physical_file_exist == true) { // physical file already exits - add file to ht_files only
-        // hash by file_id
         printf("---> found an identical physical file\n");
         file_set_logical_flag(file);
         ht_setF(temp_file->files_ht, file->file_id); // add logical file to the files ht of the pyhsical we found
@@ -394,81 +390,79 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
         file_set_physical_sn(file , temp_file->physical_sn); // set the physical sn of the logical file to be the one of the physical stored
         (*physical_files_sn)--;
 
-    } else { //add file only to ht_physical_files only
+    } else { //add file only to ht_physical_files and to ht_files
         // hash by first block id
-        printf(" --> Added file to physical ht\n");
         hash_key = ht_hash(ht_physical_files , first_block_id);
-        printf("---> hashing key is : %d\n" , hash_key);
-        current = ht_physical_files->table[hash_key];
+        printf(" --> Added file to physical ht\n---> hashing key is : %d\n", hash_key);
+        Entry ent = ht_physical_files->table[hash_key];
 
         Entry newpair  = malloc(sizeof(*newpair));
         assert(newpair);
         newpair->key = malloc(sizeof(char)*(strlen(first_block_id)+1));
         assert(newpair->key);
-        strcpy(newpair->key , first_block_id);
-        newpair->data = file;
+        newpair->key = strcpy(newpair->key , first_block_id);
+        newpair->data = file_obj_p;
 
         //Add the file in the head of the list
-        newpair->next = current;
+        newpair->next = ent;
         ht_physical_files->table[hash_key] = newpair;
     }
 
+    /*-------------------- Adding the file to logical hash table anyway -----------------------------*/
     printf("--> Now adding the logical file to the ht_files\n");
-    //add file to ht_files - no matter if physical or logical
-    Entry newpair = NULL;
-    Entry next = NULL;
-    Entry last = NULL;
+    char* key = malloc(sizeof(char)*(strlen(file->file_id)+1));
+    strcpy(key , file->file_id);
+    Entry newpair_l  = malloc(sizeof(*newpair_l));
+    if(newpair_l == NULL){
+        printf("(HashTable)--> Adding Pair to HT - Allocation Error (1) \n");
+        return NULL;
+    }
+    newpair_l->key = malloc(sizeof(char)*(strlen(file->file_id)+1));
+    newpair_l->key = strcpy(newpair_l->key , file->file_id);
+    newpair_l->data = file;
 
-    hash_key = ht_hash(ht_files , file->file_id);
-    next = ht_files->table[hash_key];
+    Entry curr = NULL , last = NULL;
+    long int hash_key_f = ht_hash( ht_files , file->file_id );
+    curr = ht_files->table[hash_key_f];
     /* Advance until get the end of the list OR first matching key*/
-    while( next != NULL && next->key != NULL && strcmp(file->file_id, next->key ) != 0 ) {
-        printf("--> (1) - %s\n", next->key );
-        last = next;
-        next = next->next;
-        if(next == NULL){
-            printf("---> The following node is NULLLLLLLLLLL \n");
+    while( curr != NULL ) {
+        if(curr->key != NULL){
+            break;
         }
-        if(next->key == NULL){
-            printf("---> The following nodes KEYYYYY is NULLLLLLLLLLL \n");
+        if(strcmp( key, curr->key ) != 0){
+            printf("--> (1) - %s\n", curr->key );
+            last = curr;
+            curr = curr->next;
+        } else{
+            printf("--> (7) \n");
+            break;
         }
     }
     printf("--> (1.1)\n");
     /* There's already a pair. Let's replace that string. */
-    if( next != NULL && next->key != NULL && strcmp( file->file_id, next->key ) == 0 ) {
+    if( curr != NULL && curr->key != NULL && strcmp( key, curr->key ) == 0 ) {
         //Return the pointer to the Block/File that already exists in the hash
         printf("--> (2)\n");
-        return next->data;
+        return curr->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
-        newpair  = malloc(sizeof(*newpair));
-        assert(newpair);
-        newpair->key = malloc(sizeof(char)*(strlen(file->file_id)+1));
-        assert(newpair->key);
-        strcpy(newpair->key , file->file_id);
-        newpair->data = file;
         printf("--> (3)\n");
-
-        if(newpair == NULL){
-            printf("(HashTable)--> Adding FILE to HT - Allocation Error (1) \n");
-            return NULL;
-        }
         /* We're at the start of the linked list in this hash_key. */
-        if( next == ht_files->table[hash_key] ){ // If we are in an empty list
+        if( curr == ht_files->table[hash_key_f] ){ // If we in an empty list
             printf("--> (4)\n");
-            newpair->next = next;
-            ht_files->table[hash_key] = newpair;
+            newpair_l->next = curr;
+            ht_files->table[hash_key_f] = newpair_l;
 
             /* We're at the end of the linked list in this hash_key. */
-        } else if ( next == NULL ) {
+        } else if ( curr == NULL ) {
             printf("--> (5)\n");
-            last->next = newpair;
+            last->next = newpair_l;
 
         } else  { /* We're in the middle of the list. */
             printf("--> (6)\n");
-            newpair->next = next;
-            last->next = newpair;
+            newpair_l->next = curr;
+            last->next = newpair_l;
         }
-        return newpair->data;
+        return newpair_l->data;
     }
 }
 

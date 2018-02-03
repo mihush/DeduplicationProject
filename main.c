@@ -130,11 +130,12 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
         return;
     }
     // If we got here it means we have blocks to read - Add file to files hashtable
-    File file_obj = NULL;
+    File file_obj = NULL , file_obj_p = NULL;
     if(dedup_type == 'B'){ //Block level deduplication
         file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F', &object_exists , physical_files_sn);
     } else { // File level deduplication
         file_obj = file_create(object_id , depth , files_sn , file_size , physical_files_sn);
+        file_obj_p = file_create(object_id , depth , files_sn , file_size , physical_files_sn);
     }
     files_sn++; // logical_files_sn
     physical_files_sn++;
@@ -164,9 +165,12 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
             printf("%s\n" , file_obj->file_id);
             //printf("%s\n", block_id);
             file_add_block(file_obj , block_id , block_size);
+            if(dedup_type == 'F'){
+                file_add_block(file_obj_p , block_id , block_size);
+            }
             Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B', &object_exists , 0);
             block_add_file(new_block , file_obj->file_id);
-            //printf("%s\n", new_block->block_id);
+
             if(object_exists == false){
                 printf("The block Doesn't Exist \n");
                 blocks_sn++;
@@ -178,9 +182,8 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
     }
     *finished_process_blocks = true;
 
-
     if(dedup_type == 'F'){ // Check if physical file already exists
-        file_compare(ht_files ,ht_physical_files ,  file_obj, &physical_files_sn);
+        file_compare(ht_files ,ht_physical_files ,  file_obj , file_obj_p , &physical_files_sn);
     }
     return;
 }
