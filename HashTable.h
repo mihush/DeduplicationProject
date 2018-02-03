@@ -145,9 +145,14 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
 
 /*
  * ht_set - Insert a key-value pair into a hash table.
+ *          possible flags are:
+ *              - F - for logical files
+ *              - B - for blocks
+ *              - D - for directories
+ *              - P - for
  */
-Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag, bool* object_exists ,
-            unsigned long physical_sn) {
+Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag,
+            bool* object_exists , unsigned long physical_sn) {
     Entry newpair = NULL;
     Entry next = NULL;
     Entry last = NULL;
@@ -259,64 +264,213 @@ void hashTable_destroy(HashTable ht , char flag){
  *                          1 - check sizes
  *                          2 - check amount of blocks
  *                          3 - check first block , second block, etc ....
+ *                         returns false if physical file already exists
+ *                         returns true if no physical file exists
  */
-//TODO compare between two files (files are considered identical if have the same blocks)
-bool file_compare(HashTable ht_files,  File file, unsigned long* physical_files_sn){
-    assert(file);
-    Entry pair = NULL;
-    bool physical_file_exist = true;
-    printf("File to check is: %s \n", file->file_id);
-    for(int i = 0 ; i < (ht_files->size_table) ;i++){
-        pair = ht_files->table[i];
-        while( pair != NULL && pair->key != NULL) {
-            File temp_file = ((File)(pair->data));
-            printf("Current file checked is: %s\n", temp_file->file_id);
-            if(strcmp(file->file_id , temp_file->file_id) == 0){ //It's the same file
-                pair = pair->next;
-                continue;
-            }
-            //Compare by sizes
-            if(file->file_size != temp_file->file_size){
-                pair = pair->next;
-                continue;
-            }
-            printf("---> sizes are the same\n");
-            //Compare by amount of blocks
-            if(file->num_blocks != temp_file->num_blocks){
-                pair = pair->next;
-                continue;
-            }
-            printf("---> Amount of blocks is the same\n");
+//compare between two files (files are considered identical if have the same blocks)
+//bool file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
+//                  unsigned long* physical_files_sn){
+//    assert(file);
+//    Entry pair = NULL;
+//    bool physical_file_exist = true;
+//    printf("File to check is: %s \n", file->file_id);
+//    for(int i = 0 ; i < (ht_files->size_table) ;i++){
+//        pair = ht_files->table[i];
+//        while( pair != NULL && pair->key != NULL) {
+//            File temp_file = ((File)(pair->data));
+//            printf("Current file checked is: %s\n", temp_file->file_id);
+//            if(strcmp(file->file_id , temp_file->file_id) == 0){ //It's the same file
+//                pair = pair->next;
+//                continue;
+//            }
+//            if(file->file_size != temp_file->file_size){ //Compare by sizes
+//                pair = pair->next;
+//                continue;
+//            }
+//            printf("---> sizes are the same\n");
+//            if(file->num_blocks != temp_file->num_blocks){ //Compare by amount of blocks
+//                pair = pair->next;
+//                continue;
+//            }
+//            printf("---> Amount of blocks is the same\n");
+//
+//            //Compare each block
+//            Object_Info temp_oi;
+//            Block_Info temp_file_blocks = listGetFirst(temp_file->blocks_list);
+//            LIST_FOREACH(Block_Info , iter ,file->blocks_list){
+//                if(strcmp(iter->id , temp_file_blocks->id) != 0){
+//                    temp_oi = listGetFirst(temp_file->blocks_list);
+//                    temp_oi = listGetFirst(file->blocks_list);
+//                    physical_file_exist = false;
+//                    break;
+//                }
+//                temp_file_blocks = listGetNext(temp_file->blocks_list);
+//            }
+//            temp_oi = listGetFirst(temp_file->blocks_list);
+//            temp_oi = listGetFirst(file->blocks_list);
+//            if(physical_file_exist == true) { // physical file already exits
+//                printf("---> found an identical file\n");
+//                file_set_logical_flag(file);
+//                ht_setF(temp_file->files_ht, file->file_id);
+//                (temp_file->num_files)++;
+//                file_set_physical_sn(file , temp_file->physical_sn);
+//                (*physical_files_sn)--;
+//            }
+//            pair = pair->next;
+//        }
+//    }
+//
+//    return true;
+//}
 
-            //Compare each block
-            Object_Info temp_oi;
-            Block_Info temp_file_blocks = listGetFirst(temp_file->blocks_list);
-            LIST_FOREACH(Block_Info , iter ,file->blocks_list){
-                if(strcmp(iter->id , temp_file_blocks->id) != 0){
-                    temp_oi = listGetFirst(temp_file->blocks_list);
-                    temp_oi = listGetFirst(file->blocks_list);
-                    physical_file_exist = false;
-                    break;
-                }
-                temp_file_blocks = listGetNext(temp_file->blocks_list);
+Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
+                  unsigned long* physical_files_sn){
+    assert(file);
+    bool physical_file_exist = false;
+    bool blocks_differ = false;
+
+
+    Block_Info first_block = (Block_Info)listGetFirst(file->blocks_list);
+    char* first_block_id = first_block->id;
+    long int hash_key = ht_hash(ht_physical_files , first_block_id);
+    printf("--> File to check is: %s \n", file->file_id);
+    printf("---> first block id is: %s \n", first_block_id);
+    Entry current = ht_physical_files->table[hash_key]; //get the cell int the hashtable for the possible file
+    File temp_file = NULL;
+    if(current == NULL){
+        printf("---> hashing key is : %d\n" , hash_key);
+        printf(" The list is empty =[ \n");
+    }
+    //go over all files in the cell found above
+    while(current != NULL && current->key != NULL){
+        temp_file = ((File)(current->data));
+        printf("Current file checked is: %s\n", temp_file->file_id);
+        if(strcmp(file->file_id , temp_file->file_id) == 0){ //It's the same file
+            current = current->next;
+            continue;
+        }
+        if(file->file_size != temp_file->file_size){ //Compare by sizes
+            current = current->next;
+            continue;
+        }
+        printf("---> sizes are the same\n");
+        if(file->num_blocks != temp_file->num_blocks){ //Compare by amount of blocks
+            current = current->next;
+            continue;
+        }
+        printf("---> Amount of blocks is the same\n");
+
+        //Compare each block
+        Object_Info temp_oi;
+        Block_Info temp_file_blocks = listGetFirst(temp_file->blocks_list);
+        LIST_FOREACH(Block_Info , iter ,file->blocks_list){
+            if(strcmp(iter->id , temp_file_blocks->id) != 0){
+                temp_oi = listGetFirst(temp_file->blocks_list);
+                temp_oi = listGetFirst(file->blocks_list);
+                blocks_differ = true; // the blocks aren't the same
+                break;
             }
-            temp_oi = listGetFirst(temp_file->blocks_list);
-            temp_oi = listGetFirst(file->blocks_list);
-            if(physical_file_exist == true) { // physical file already exits
-                printf("---> found an identical file\n");
-                file_set_logical_flag(file);
-                ht_setF(temp_file->files_ht, file->file_id);
-                (temp_file->num_files)++;
-                file_set_physical_sn(file , temp_file->physical_sn);
-                (*physical_files_sn)--;
-            }
-            pair = pair->next;
+            temp_file_blocks = listGetNext(temp_file->blocks_list);
+        }
+        temp_oi = listGetFirst(temp_file->blocks_list);
+        temp_oi = listGetFirst(file->blocks_list);
+        if(blocks_differ == true){
+            //advance to the next cell
+            current = current->next;
+            continue;
+        } else { // We have found a match
+            physical_file_exist = true;
+            break;
         }
     }
 
-    return true;
-}
+    //-------------------- Adding the file to hash table -----------------------------
+    if(physical_file_exist == true) { // physical file already exits - add file to ht_files only
+        // hash by file_id
+        printf("---> found an identical physical file\n");
+        file_set_logical_flag(file);
+        ht_setF(temp_file->files_ht, file->file_id); // add logical file to the files ht of the pyhsical we found
+        (temp_file->num_files)++;
+        file_set_physical_sn(file , temp_file->physical_sn); // set the physical sn of the logical file to be the one of the physical stored
+        (*physical_files_sn)--;
 
+    } else { //add file only to ht_physical_files only
+        // hash by first block id
+        printf(" --> Added file to physical ht\n");
+        hash_key = ht_hash(ht_physical_files , first_block_id);
+        printf("---> hashing key is : %d\n" , hash_key);
+        current = ht_physical_files->table[hash_key];
+
+        Entry newpair  = malloc(sizeof(*newpair));
+        assert(newpair);
+        newpair->key = malloc(sizeof(char)*(strlen(first_block_id)+1));
+        assert(newpair->key);
+        strcpy(newpair->key , first_block_id);
+        newpair->data = file;
+
+        //Add the file in the head of the list
+        newpair->next = current;
+        ht_physical_files->table[hash_key] = newpair;
+    }
+
+    printf("--> Now adding the logical file to the ht_files\n");
+    //add file to ht_files - no matter if physical or logical
+    Entry newpair = NULL;
+    Entry next = NULL;
+    Entry last = NULL;
+
+    hash_key = ht_hash(ht_files , file->file_id);
+    next = ht_files->table[hash_key];
+    /* Advance until get the end of the list OR first matching key*/
+    while( next != NULL && next->key != NULL && strcmp(file->file_id, next->key ) != 0 ) {
+        printf("--> (1) - %s\n", next->key );
+        last = next;
+        next = next->next;
+        if(next == NULL){
+            printf("---> The following node is NULLLLLLLLLLL \n");
+        }
+        if(next->key == NULL){
+            printf("---> The following nodes KEYYYYY is NULLLLLLLLLLL \n");
+        }
+    }
+    printf("--> (1.1)\n");
+    /* There's already a pair. Let's replace that string. */
+    if( next != NULL && next->key != NULL && strcmp( file->file_id, next->key ) == 0 ) {
+        //Return the pointer to the Block/File that already exists in the hash
+        printf("--> (2)\n");
+        return next->data;
+    } else { /* Nope, could't find it.  Time to grow a pair. */
+        newpair  = malloc(sizeof(*newpair));
+        assert(newpair);
+        newpair->key = malloc(sizeof(char)*(strlen(file->file_id)+1));
+        assert(newpair->key);
+        strcpy(newpair->key , file->file_id);
+        newpair->data = file;
+        printf("--> (3)\n");
+
+        if(newpair == NULL){
+            printf("(HashTable)--> Adding FILE to HT - Allocation Error (1) \n");
+            return NULL;
+        }
+        /* We're at the start of the linked list in this hash_key. */
+        if( next == ht_files->table[hash_key] ){ // If we are in an empty list
+            printf("--> (4)\n");
+            newpair->next = next;
+            ht_files->table[hash_key] = newpair;
+
+            /* We're at the end of the linked list in this hash_key. */
+        } else if ( next == NULL ) {
+            printf("--> (5)\n");
+            last->next = newpair;
+
+        } else  { /* We're in the middle of the list. */
+            printf("--> (6)\n");
+            newpair->next = next;
+            last->next = newpair;
+        }
+        return newpair->data;
+    }
+}
 
 /* **************** END *************** HashTable Functions **************** END ***************** */
 

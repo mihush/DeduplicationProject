@@ -14,7 +14,7 @@
 unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0, physical_files_sn = 0;
 
 /* Hash-Tables for blocks, files , directories */
-HashTable ht_files , ht_blocks , ht_dirs ;
+HashTable ht_files , ht_blocks , ht_dirs ,ht_physical_files;
 
 /* Root Directory */
 Dir roots[NUM_INPUT_FILES];
@@ -130,10 +130,15 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
         return;
     }
     // If we got here it means we have blocks to read - Add file to files hashtable
-
-    File file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F', &object_exists , physical_files_sn);
+    File file_obj = NULL;
+    if(dedup_type == 'B'){ //Block level deduplication
+        file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F', &object_exists , physical_files_sn);
+    } else { // File level deduplication
+        file_obj = file_create(object_id , depth , files_sn , file_size , physical_files_sn);
+    }
     files_sn++; // logical_files_sn
     physical_files_sn++;
+
     *file_was_created = true;
     object_exists = false;
 
@@ -157,11 +162,11 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
             }
             block_size = (int)strtol(size,(char **)NULL, 10);
             printf("%s\n" , file_obj->file_id);
-            printf("%s\n", block_id);
+            //printf("%s\n", block_id);
             file_add_block(file_obj , block_id , block_size);
             Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B', &object_exists , 0);
             block_add_file(new_block , file_obj->file_id);
-            printf("%s\n", new_block->block_id);
+            //printf("%s\n", new_block->block_id);
             if(object_exists == false){
                 printf("The block Doesn't Exist \n");
                 blocks_sn++;
@@ -172,14 +177,10 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
         } while (strlen(buff) > 1);
     }
     *finished_process_blocks = true;
-    // Check if physical file already exists
-    //TODO Correct This
-    if(dedup_type == 'F'){
-        bool result = file_compare(ht_files , file_obj, &physical_files_sn);
-        if(result == true){
-            printf("Yesss madafacc...-----> Physical file already exists\n");
 
-        }
+
+    if(dedup_type == 'F'){ // Check if physical file already exists
+        file_compare(ht_files ,ht_physical_files ,  file_obj, &physical_files_sn);
     }
     return;
 }
@@ -279,7 +280,11 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
             strcat(fileName , "_");
         }
     }
-    strcat(fileName , ".csv");
+    if( dedup_type == 'B'){
+        strcat(fileName , "_B.csv");
+    } else {
+        strcat(fileName , "_F.csv");
+    }
     results_file = fopen(fileName , "w+");
 
     if(dedup_type == 'B'){
@@ -298,8 +303,7 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
     if(dedup_type == 'B'){
         fprintf(results_file ,"# Num Blocks:, %lu\n", (blocks_sn));
     } else {
-        //TODO change this to physical files
-        fprintf(results_file ,"# Num physical files: , %lu\n", (blocks_sn));
+        fprintf(results_file ,"# Num physical files: , %lu\n", (physical_files_sn));
     }
 
     if(dedup_type == 'B'){ //Block level deduplication
@@ -345,14 +349,10 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
     }else{
         printf("File Level Dedup\n");
         //Print physical files
-        for(int i = 0 ; i < (ht_files->size_table) ;i++){
-            pair = ht_files->table[i];
+        for(int i = 0 ; i < (ht_physical_files->size_table) ;i++){
+            pair = ht_physical_files->table[i];
             while( pair != NULL && pair->key != NULL) {
                 File temp_file = ((File)(pair->data));
-                if(temp_file->flag != 'P'){
-                    pair = pair->next;
-                    continue;
-                }
                 fprintf(results_file , "P, %lu, %s, %d,",
                         temp_file->physical_sn, temp_file->file_id ,
                         temp_file->num_files);
@@ -422,9 +422,10 @@ int main(){
 
     /// Initialize Global Variables
     ht_files = ht_create('F');
+    ht_physical_files = ht_create('F');
     ht_blocks = ht_create('B');
     ht_dirs = ht_create('D');
-    if(ht_files == NULL || ht_blocks == NULL || ht_dirs == NULL){
+    if(ht_files == NULL || ht_blocks == NULL || ht_dirs == NULL ||ht_physical_files == NULL){
         printf("(Parser)--> Failed Allocating Hash Tables in parser =[ \n");
         return 0;
     }
