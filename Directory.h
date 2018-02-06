@@ -67,7 +67,6 @@ static  void free_dir_info(ListElement dir_info){
  *                      - depth
  */
 Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
-    assert(dir_sn >= 0);
     Dir dir = malloc(sizeof(*dir));
     if(dir == NULL){
         printf("(Directory)--> Creating Directory - Allocation Error (1) \n");

@@ -291,22 +291,22 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
     results_file = fopen(fileName , "w+");
 
     if(dedup_type == 'B'){
-        fprintf(results_file ,"# Output type: , block-level\n");
+        fprintf(results_file ,"# Output type: block-level\n");
     } else {
-        fprintf(results_file ,"# Output type: , file-level\n");
+        fprintf(results_file ,"# Output type: file-level\n");
     }
-    fprintf(results_file ,"# Input files: ,");
+    fprintf(results_file ,"# Input files: ");
     for(int i =0 ; i < NUM_INPUT_FILES ; i++){
-        fprintf(results_file ,"%s," , files_to_read[i]);
+        fprintf(results_file ,"%s" , files_to_read[i]);
     }
     fprintf(results_file ,"\n");
 
-    fprintf(results_file ,"# Num files: , %lu\n" , (files_sn));
-    fprintf(results_file ,"# Num directories: , %lu\n" , (dir_sn));
+    fprintf(results_file ,"# Num files: %lu\n" , (files_sn));
+    fprintf(results_file ,"# Num directories: %lu\n" , (dir_sn));
     if(dedup_type == 'B'){
-        fprintf(results_file ,"# Num Blocks:, %lu\n", (blocks_sn));
+        fprintf(results_file ,"# Num Blocks: %lu\n", (blocks_sn));
     } else {
-        fprintf(results_file ,"# Num physical files: , %lu\n", (physical_files_sn));
+        fprintf(results_file ,"# Num physical files: %lu\n", (physical_files_sn));
     }
 
     if(dedup_type == 'B'){ //Block level deduplication
@@ -315,13 +315,13 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
             pair = ht_files->table[i];
             while( pair != NULL && pair->key != NULL) {
                 File temp_file = ((File)(pair->data));
-                fprintf(results_file , "F, %lu, %s, %lu, %d,",
+                fprintf(results_file , "F,%lu,%s,%lu,%d,",
                         temp_file->file_sn, temp_file->file_id , temp_file->dir_sn,
                         temp_file->num_blocks);
                 //Object_Info temp_oi;
                 LIST_FOREACH(Block_Info , iter ,temp_file->blocks_list){
                     unsigned long block_sn = ((Block)(ht_get(ht_blocks , iter->id)))->block_sn;
-                    fprintf(results_file ,"%lu, %d," , block_sn , iter->size);
+                    fprintf(results_file ,"%lu,%d," , block_sn , iter->size);
                 }
                 //temp_oi = listGetFirst(temp_file->blocks_list);
                 fprintf(results_file ,"\n");
@@ -333,7 +333,7 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
             pair = ht_blocks->table[i];
             while( pair != NULL && pair->key != NULL) {
                 Block temp_block = ((Block)(pair->data));
-                fprintf(results_file , "B, %lu, %s, %d,",
+                fprintf(results_file , "B,%lu,%s,%d,",
                         temp_block->block_sn , temp_block->block_id,
                         temp_block->shared_by_num_files);
                 printf("%s\n", temp_block->block_id);
@@ -351,12 +351,24 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
         }
     }else{
         printf("File Level Dedup\n");
+
+        //Print logical files
+        for(int i = 0 ; i < (ht_files->size_table) ;i++){
+            pair = ht_files->table[i];
+            while( pair != NULL && pair->key != NULL) {
+                File temp_file = ((File)(pair->data));
+                fprintf(results_file , "F,%lu,%s,%lu,%d,%lu,%d\n",
+                        temp_file->file_sn, temp_file->file_id , temp_file->dir_sn,
+                        1, temp_file->physical_sn, temp_file->file_size);
+                pair = pair->next;
+            }
+        }
         //Print physical files
         for(int i = 0 ; i < (ht_physical_files->size_table) ;i++){
             pair = ht_physical_files->table[i];
             while( pair != NULL && pair->key != NULL) {
                 File temp_file = ((File)(pair->data));
-                fprintf(results_file , "P, %lu, %s, %d,",
+                fprintf(results_file , "P,%lu,%s,%d,",
                         temp_file->physical_sn, temp_file->file_id ,
                         temp_file->num_files);
                 for(int j = 0 ; j < (temp_file->files_ht->size_table) ; j++){
@@ -372,17 +384,6 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
             }
         }
 
-        //Print logical files
-        for(int i = 0 ; i < (ht_files->size_table) ;i++){
-            pair = ht_files->table[i];
-            while( pair != NULL && pair->key != NULL) {
-                File temp_file = ((File)(pair->data));
-                fprintf(results_file , "F, %lu, %s, %lu, %d, %lu, %d\n",
-                        temp_file->file_sn, temp_file->file_id , temp_file->dir_sn,
-                        1, temp_file->physical_sn, temp_file->file_size);
-                pair = pair->next;
-            }
-        }
     }
 
     //Print Directories
@@ -396,7 +397,7 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
             }else {
                 fprintf(results_file , "D,");
             }
-            fprintf(results_file , "%lu, %s, %lu, %d, %d," ,
+            fprintf(results_file , "%lu,%s,%lu,%d,%d," ,
                     temp_dir->dir_sn, temp_dir->dir_id, temp_dir->parent_dir_sn,
                     temp_dir->num_of_subdirs, temp_dir->num_of_files);
             LIST_FOREACH(unsigned long* , iter , temp_dir->dirs_list){
@@ -443,8 +444,9 @@ int main(){
     /// Define Files to be read
     char* files_to_read[NUM_INPUT_FILES];
     //char* current_working_directory  = "/home/polinam/27_01_18/";
-    char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
-    files_to_read[0] = "input_example";
+    //char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
+    char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
+    files_to_read[0] = "0119";
     //files_to_read[1] = "0119";
     char* current_file = NULL;
     bool finished_reading_file = false;
@@ -464,7 +466,8 @@ int main(){
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /* ---------------------------------------------------------------------------------------- */
     /* ------------------------------------- File Reading ------------------------------------- */
-    res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+    //res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
+    res_file_1 = fopen("C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\res_file_1.txt" , "w");
     //res_file_1 = fopen("/home/polinam/27_01_18/res_file.txt" , "w");
     /* Go over all file systems */
     for (int i = 0; i < NUM_INPUT_FILES ; ++i) { /* (1) Read an Input File */

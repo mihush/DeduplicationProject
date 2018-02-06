@@ -32,6 +32,8 @@ typedef enum{
 #define DIR_SIZE 0
 #define FILE_ATTRIBUTE_DIRECTORY 0x00000010
 #define ROOT_ID_LEN 8
+#define FILE_NAME_LEN 5
+#define NUM_OF_INPUT_FILE 208
 
 /* **************** START **************** object_info struct **************** START **************** */
 
