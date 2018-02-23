@@ -152,7 +152,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
  *              - P - for
  */
 Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag,
-            bool* object_exists , unsigned long physical_sn) {
+            bool* object_exists , unsigned long physical_sn, char dedup_type) {
     Entry newpair = NULL;
     Entry next = NULL;
     Entry last = NULL;
@@ -160,7 +160,17 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
     long int hash_key = ht_hash( ht , key );
     next = ht->table[hash_key];
 
-    /* Advance until get the end of the list OR first matching key*/
+    if(dedup_type == 'B' && flag == 'F'){// We are using Block Level Deduplication and we are working on File object
+        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn);
+        newpair->next = next;
+        ht->table[hash_key] = newpair;
+        return newpair->data;
+    }
+
+    // The code gets here only in 2 cases:
+    //              - Block Level Deduplication - Block object or Directory Object
+    //              - File Level Deduplication - Block Object or Directory Object Since files are added differently without using ht_set
+    /* Advance until get the end of the list OR first matching key */
     while( next != NULL && next->key != NULL && strcmp( key, next->key ) != 0 ) {
         last = next;
         next = next->next;

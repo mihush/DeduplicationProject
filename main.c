@@ -18,7 +18,9 @@ HashTable ht_files , ht_blocks , ht_dirs ,ht_physical_files;
 
 /* Root Directory */
 Dir roots[NUM_INPUT_FILES];
-char dedup_type = 'F';
+char dedup_type = 'B';
+
+int targetDepth = 5;
 /************************************************** Helper Functions **************************************************/
 /* Compare between current buffer and string of "Z"*/
 bool check_12_z(char buff[STR_OF_Z]){
@@ -30,7 +32,7 @@ bool check_12_z(char buff[STR_OF_Z]){
     return true;
 }
 
-/************************************************** Parsing Functions **************************************************/
+/************************************************* Parsing Functions **************************************************/
 /* DIRECTORY NAME */
 char* case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
     //only first 10 digits depict the hashed directory name
@@ -132,7 +134,7 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
     // If we got here it means we have blocks to read - Add file to files hashtable
     File file_obj = NULL , file_obj_p = NULL;
     if(dedup_type == 'B'){ //Block level deduplication
-        file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F', &object_exists , physical_files_sn);
+        file_obj = ht_set(ht_files , object_id , depth ,files_sn , file_size ,'F', &object_exists , physical_files_sn,dedup_type);
     } else { // File level deduplication
         file_obj = file_create(object_id , depth , files_sn , file_size , physical_files_sn);
         file_obj_p = file_create(object_id , depth , files_sn , file_size , physical_files_sn);
@@ -168,7 +170,7 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
             if(dedup_type == 'F'){
                 file_add_block(file_obj_p , block_id , block_size);
             }
-            Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B', &object_exists , 0);
+            Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B', &object_exists , 0 , dedup_type);
             block_add_file(new_block , file_obj->file_id);
 
             if(object_exists == false){
@@ -351,18 +353,18 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
         }
     }else{
         printf("File Level Dedup\n");
-
         //Print logical files
         for(int i = 0 ; i < (ht_files->size_table) ;i++){
             pair = ht_files->table[i];
             while( pair != NULL && pair->key != NULL) {
                 File temp_file = ((File)(pair->data));
-                fprintf(results_file , "F,%lu,%s,%lu,%d,%lu,%d\n",
+                fprintf(results_file , "F,%lu,%s,%lu,%d,%lu,%d,\n",
                         temp_file->file_sn, temp_file->file_id , temp_file->dir_sn,
                         1, temp_file->physical_sn, temp_file->file_size);
                 pair = pair->next;
             }
         }
+
         //Print physical files
         for(int i = 0 ; i < (ht_physical_files->size_table) ;i++){
             pair = ht_physical_files->table[i];
@@ -444,9 +446,9 @@ int main(){
     /// Define Files to be read
     char* files_to_read[NUM_INPUT_FILES];
     //char* current_working_directory  = "/home/polinam/27_01_18/";
-    //char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
-    char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
-    files_to_read[0] = "0119";
+    char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
+    //char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
+    files_to_read[0] = "input_example";
     //files_to_read[1] = "0119";
     char* current_file = NULL;
     bool finished_reading_file = false;
@@ -543,14 +545,14 @@ int main(){
                                 root_id[1] = '_';
                                 strncpy((root_id + 2) , "root" , 4);
                                 root_id[7] = '\0';
-                                roots[i] = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already , 0);
+                                roots[i] = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already , 0 , dedup_type);
                                 //root_directory = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already);
                                 dir_sn++;
                                 free(root_id);
                                 set_root = false;
                             }
                             //Create Directory Object with the retrieved data
-                            ht_set(ht_dirs, object_id, depth, dir_sn, DIR_SIZE , 'D' , &object_exists_in_hash_already , 0);
+                            ht_set(ht_dirs, object_id, depth, dir_sn, DIR_SIZE , 'D' , &object_exists_in_hash_already , 0, dedup_type);
                             dir_sn++;
                         }
                         break;
