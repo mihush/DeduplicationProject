@@ -1,12 +1,8 @@
-/***************************************************** INCLUDES *******************************************************/
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+/* *************************************************** INCLUDES ***************************************************** */
 #include "Utilities.h"
 #include "HashTable.h"
 
-
-/************************************************** Global Params *****************************************************/
+/* ************************************************ Global Params *************************************************** */
 #define NUM_INPUT_FILES 1
 
 /* Serial number for counting the elements which insert to the system */
@@ -20,8 +16,7 @@ HashTable ht_files , ht_blocks , ht_dirs ,ht_physical_files;
 Dir roots[NUM_INPUT_FILES];
 char dedup_type = 'B';
 
-int targetDepth = 5;
-/************************************************** Helper Functions **************************************************/
+/* ************************************************ Helper Functions ************************************************ */
 /* Compare between current buffer and string of "Z"*/
 bool check_12_z(char buff[STR_OF_Z]){
     for (int i = 0; i < STR_OF_Z ; ++i) {
@@ -32,9 +27,9 @@ bool check_12_z(char buff[STR_OF_Z]){
     return true;
 }
 
-/************************************************* Parsing Functions **************************************************/
+/* *********************************************** Parsing Functions ************************************************ */
 /* DIRECTORY NAME */
-char* case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
+char* case_1_directory_name(char buff[BUFFER_SIZE]){
     //only first 10 digits depict the hashed directory name
     char* dir_name_hash = calloc(DIR_NAME_LEN,sizeof(char));
     if(!dir_name_hash){
@@ -46,43 +41,38 @@ char* case_1_directory_name(FILE *res_file , char buff[BUFFER_SIZE]){
 }
 
 /* NAMESPACE DEPTH */
-unsigned short case_4_get_depth(FILE *res_file , char buff[BUFFER_SIZE]){
+unsigned short case_4_get_depth(char buff[BUFFER_SIZE]){
     unsigned short namespace_depth = (unsigned short)strtol(buff,(char**)NULL, 10);
     return namespace_depth ;
 }
 
 /* FILE SIZE */
-unsigned int case_5_file_size(FILE *res_file , char buff[BUFFER_SIZE]){
+unsigned int case_5_file_size(char buff[BUFFER_SIZE]){
     unsigned int file_size = (unsigned int)strtol(buff,(char **)NULL, 10);
     return file_size;
 }
 
-/* FILE ATTRIBUTES VALUE */
-/*
+/* FILE ATTRIBUTES VALUE
  * Returns one from { 'D' , 'F'}
  *  @ 'D' - for directory
  *  @ 'F' - for file
  */
-char case_6_file_attribute(FILE *res_file , char buff[BUFFER_SIZE]){
+char case_6_file_attribute(char buff[BUFFER_SIZE]){
     unsigned int file_attribute = (unsigned int)strtol(buff,(char **)NULL, 16);
-    //printf("(Parser) --> File attribute is (HEX): %X \n" , file_attribute);
-    //fprintf(res_file , "(Parser) --> File attribute is (HEX): %X \n" , file_attribute);
     char res;
 
     //Check for a directory, otherwise it is a file
     //The fifth bit should be set if this is a directory
     if((FILE_ATTRIBUTE_DIRECTORY & file_attribute) == FILE_ATTRIBUTE_DIRECTORY){
-        //fprintf(res_file , "(Parser) --> The object is a Directory\n");
         res = 'D';
     } else{
-        //fprintf(res_file, "(Parser) --> The object is a File \n");
         res = 'F';
     }
     return res;
 }
 
 /* FILE ID */
-char* case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_of_file){
+char* case_7_hash_file_id(char buff[BUFFER_SIZE], int ind_num_of_file){
     char* file_id = calloc(FILE_ID_LEN , sizeof(char)); // The value is 15 chars + 2 chars for index +1 for eol (end of line)
     if(file_id == NULL){
         return NULL;
@@ -97,7 +87,7 @@ char* case_7_hash_file_id(FILE* res_file , char buff[BUFFER_SIZE], int ind_num_o
 
 /* Line 13 is SV */
 // returns true if a file was created
-void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_count ,
+void case_13_VS(FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_count ,
                 bool* read_empty_line_chucnks ,unsigned short depth, char* object_id, unsigned int file_size ,
                 bool* file_was_created, bool* finished_process_blocks) {
     bool read_block = false;   /* Params initialization */
@@ -150,8 +140,6 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
         //we already have one chunk in the buffer
         do {
             char size[CHUNKE_SIZE_LEN];
-            fputs(buff, res_file);
-
             if (check_12_z(buff) == true) {
                 //only first 12 digits are block_id
                 strncpy(block_id, buff, STR_OF_Z);
@@ -191,42 +179,32 @@ void case_13_VS(FILE* res_file , FILE *input_file , char buff[BUFFER_SIZE] , int
 }
 
 /* update_parent_dir_sn */
-void update_parent_dir_sn(FILE* res_file, List previous , List current , int global_depth , int input_file_index){
+void update_parent_dir_sn(List previous , List current , int global_depth , int input_file_index){
     File temp_file = NULL;
     Dir temp_dir = NULL;
 
-    fprintf(res_file , "(update_parent_dir_sn) -->  Updating Parent directory serial numbers in depth %d ..... \n" , global_depth);
     if(global_depth == 0){ //We are at root Level directory just set everyone to be the children of root
-        printf("Updating roots Children .... \n");
-        printf("depth is : %d \n" , global_depth);
-        //unsigned long root_sn = root_directory->dir_sn;
         unsigned long root_sn = roots[input_file_index]->dir_sn;
         //Set root to be its own child
         dir_set_parent_dir_sn(roots[input_file_index] , root_sn);
         dir_add_sub_dir(roots[input_file_index] , root_sn);
-
-        //Dir temp_dir_root = (Dir)(ht_get(ht_dirs , roots[input_file_index]->dir_id));
 
         LIST_FOREACH(Object_Info , iter ,current){
             if(iter->object_type == 'F'){
                 temp_file = (File)(ht_get(ht_files , iter->object_id));
                 assert(temp_file);
                 file_set_parent_dir_sn(temp_file ,root_sn);
-                //dir_add_file(temp_dir_root,temp_file->file_sn);
                 dir_add_file(roots[input_file_index],temp_file->file_sn);
 
             } else{
                 temp_dir = (Dir)(ht_get(ht_dirs , iter->object_id));
                 assert(temp_dir);
                 dir_set_parent_dir_sn(temp_dir , root_sn);
-                //dir_add_sub_dir(temp_dir_root,temp_dir->dir_sn);
                 dir_add_sub_dir(roots[input_file_index],temp_dir->dir_sn);
             }
         }
-        //temp_oi = listGetFirst(current);//Just in order to reset the iterator of the current list to the beginning
-    }else{ //Go over both lists and update accordingly
-        //NOW Lets Update the parent SNs!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    }else{ //Go over both lists and update accordingly
         Object_Info prev_list_iterator = listGetFirst(previous);
         Object_Info curr_list_iterator = listGetFirst(current);
         int curr_level_objects_count = 0;
@@ -290,6 +268,8 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
     } else {
         strcat(fileName , "_F.csv");
     }
+
+    // Open the output file
     results_file = fopen(fileName , "w+");
 
     if(dedup_type == 'B'){
@@ -420,7 +400,7 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
 int main(){
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /// File  Manipulation Variables
-    FILE *input_file , *res_file_1;
+    FILE *input_file;
     char buff[BUFFER_SIZE];
     bool read_empty_line_chucnks = false;
     bool finished_process_blocks = false;
@@ -448,7 +428,7 @@ int main(){
     //char* current_working_directory  = "/home/polinam/27_01_18/";
     char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
     //char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
-    files_to_read[0] = "input_example";
+    files_to_read[0] = "0119";
     //files_to_read[1] = "0119";
     char* current_file = NULL;
     bool finished_reading_file = false;
@@ -468,9 +448,6 @@ int main(){
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /* ---------------------------------------------------------------------------------------- */
     /* ------------------------------------- File Reading ------------------------------------- */
-    //res_file_1 = fopen("C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\res_file_1.txt" , "w");
-    res_file_1 = fopen("C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\res_file_1.txt" , "w");
-    //res_file_1 = fopen("/home/polinam/27_01_18/res_file.txt" , "w");
     /* Go over all file systems */
     for (int i = 0; i < NUM_INPUT_FILES ; ++i) { /* (1) Read an Input File */
         printf("(Parser)--> ----- Opening File ----- \n");
@@ -507,14 +484,14 @@ int main(){
             while (strlen(buff) > 1 && !feof(input_file)){ /* Processing Object */
                 switch(block_line_count){
                     case 1: /* DIRECTORY NAME */
-                        parent_dir_id = case_1_directory_name(res_file_1 , buff);
+                        parent_dir_id = case_1_directory_name(buff);
                         break;
                     case 4: /* NAMESPACE DEPTH */
-                        depth = case_4_get_depth(res_file_1 , buff);
+                        depth = case_4_get_depth(buff);
                         //Check if current depth (in variable depth) is bigger than the one in global_current_depth
                         if(depth > global_current_depth){
                             //This means we have reached a new depth and can update parent_dir_sn for objects from previous levels
-                            update_parent_dir_sn(res_file_1 , previous_depth_objects , curr_depth_objects , global_current_depth , i);
+                            update_parent_dir_sn(previous_depth_objects , curr_depth_objects , global_current_depth , i);
                             //Update Object lists
                             listDestroy(previous_depth_objects); //Empty the previous_depth_objects list
                             previous_depth_objects = listCopy(curr_depth_objects);//Copy the curr_depth_objects list to the previous_depth_objects
@@ -523,16 +500,16 @@ int main(){
                         }
                         break;
                     case 5: /* FILE SIZE */
-                        file_size = case_5_file_size(res_file_1 , buff);
+                        file_size = case_5_file_size(buff);
                         break;
                     case 6: /* FILE ATTRIBUTES VALUE */
-                        obj_type = case_6_file_attribute(res_file_1 , buff);
+                        obj_type = case_6_file_attribute(buff);
                         if( ( file_size == 0 ) && ( obj_type == 'F' ) ){ // ignore zero size files
                             is_zero_size_file = true;
                         }
                         break;
                     case 7: /* FILE ID */
-                        object_id = case_7_hash_file_id(res_file_1 , buff , i);
+                        object_id = case_7_hash_file_id(buff , i);
                         //Adding Directory Object to HashTable
                         if(obj_type == 'D'){
                             if( dir_sn == 0 || set_root == true){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
@@ -557,7 +534,7 @@ int main(){
                         }
                         break;
                     case 13: /* Line 13 is SV */
-                        case_13_VS(res_file_1 , input_file , buff , &block_line_count ,
+                        case_13_VS(input_file , buff , &block_line_count ,
                                    &read_empty_line_chucnks , depth , object_id,file_size,
                                    &file_was_created, &finished_process_blocks);
                         // Add object (File or Directory) to curr_depth_objects list
@@ -602,7 +579,7 @@ int main(){
 
         printf("(Parser) --> --- Finished reading the input file - Now lets start processing ---\n");
         //This means we have reached a new depth and can update parent_dir_sn for objects from previous levels
-        update_parent_dir_sn(res_file_1 , previous_depth_objects , curr_depth_objects , global_current_depth , i);
+        update_parent_dir_sn(previous_depth_objects , curr_depth_objects , global_current_depth , i);
         if(finished_reading_file == true){
             global_current_depth = 0;
             listClear(curr_depth_objects); //Empty the curr_depth_objects list
@@ -616,8 +593,6 @@ int main(){
             finished_reading_file = false;
         }
     } /* (1) Read an Input File */
-
-    fclose(res_file_1); ///Cloes the Results file
 
     printf("(Parser) --> Printing Results ................\n");
     print_ht_to_CSV(dedup_type, files_to_read);

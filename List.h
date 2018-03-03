@@ -250,7 +250,7 @@ ListResult listInsertLast(List list, ListElement element);
 * an element failed)
 * LIST_SUCCESS the element has been inserted successfully
 */
-ListResult listInsertBeforeCurrent(List list, ListElement element);
+//ListResult listInsertBeforeCurrent(List list, ListElement element);
 
 /**
 * Adds a new element to the list, the new element will be place right after
@@ -267,7 +267,7 @@ ListResult listInsertBeforeCurrent(List list, ListElement element);
 * an element failed)
 * LIST_SUCCESS the element has been inserted successfully
 */
-ListResult listInsertAfterCurrent(List list, ListElement element);
+//ListResult listInsertAfterCurrent(List list, ListElement element);
 
 /**
 * Removes the currently pointed element of the list using the stored freeing
@@ -279,7 +279,7 @@ ListResult listInsertAfterCurrent(List list, ListElement element);
 * LIST_INVALID_CURRENT if the current pointer of the list is in invalid state
 * LIST_SUCCESS the current element was removed successfully
 */
-ListResult listRemoveCurrent(List list);
+//ListResult listRemoveCurrent(List list);
 
 /**
 * Sorts the list according to the given function.
@@ -310,7 +310,7 @@ ListResult listRemoveCurrent(List list);
 * in this case.
 * LIST_SUCCESS if sorting completed successfully.
 */
-ListResult listSort(List list, CompareListElements compareElement);
+//ListResult listSort(List list, CompareListElements compareElement);
 
 /**
 * Creates a new filtered copy of a list.
@@ -364,7 +364,6 @@ ListResult listClear(List list);
 */
 void listDestroy(List list);
 
-ListResult listRestartIterator(List list);
 /**
 * Macro for iterating over a list.
 *

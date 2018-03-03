@@ -5,25 +5,19 @@
 #ifndef DEDUPLICATION_PROJECT_FILE_H
 #define DEDUPLICATION_PROJECT_FILE_H
 
-#include "List.h"
 #include "Utilities.h"
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <assert.h>
 
-
-/* ************************************************************************************************* */
-/* ************************************************************************************************* */
-/* *************** START ************** File STRUCT Definition *************** START *************** */
+/* ****************************************************************************************************************** */
+/* ****************************************************************************************************************** */
+/* ******************* START ******************* File STRUCT Definition ******************* START ******************* */
 /*
  * Definition of a File structure:
- *                  - file_sn -> a running index on all files read from the file system
- *                  - file_id -> a hushed id as appears in the input file
- *                  - file_depth -> the depth of the file in the hierarchical tree
- *                  - dir_sn -> Serial number of the directory containing this file
- *                  - num_blocks -> number of blocks the file consists of
- *                  - file_size -> the size of the file
+ *                  - file_sn     -> a running index on all files read from the file system
+ *                  - file_id     -> a hushed id as appears in the input file
+ *                  - file_depth  -> the depth of the file in the hierarchical tree
+ *                  - dir_sn      -> Serial number of the directory containing this file
+ *                  - num_blocks  -> number of blocks the file consists of
+ *                  - file_size   -> the size of the file
  *                  - blocks_list -> List of Block_info elements of blocks contained in the file
  */
 struct file_t{
@@ -42,29 +36,33 @@ struct file_t{
 };
 typedef struct file_t *File;
 
-/* **************** END *************** File STRUCT Definition **************** END **************** */
-/* ************************************************************************************************* */
-/* ************************************************************************************************* */
-/* *************** START ************** File STRUCT Functions *************** START **************** */
+/* ******************** END ******************** File STRUCT Definition ******************** END ******************** */
+/* ****************************************************************************************************************** */
+/* ****************************************************************************************************************** */
+/* ******************* START ******************* File STRUCT Functions ******************* START ******************** */
 /*
- *  file_create - Creates a new file object with:
+ *  file_create - Creates a new file object with the input parameters
  *                      - file id - a hashed id as appears in the input file
  *                      - depth
  *                      -file sn - running index on all files in the filesystem
  *                      - dir sn
  *
+ *
+ * @file_id     - hashed id of the file
+ * @depth       - the depth of the file in the file system (Root directory starts at 0)
+ * @file_sn     - serial number of the file object
+ * @size        - the size of the file
+ * @physical_sn - in case of file level deduplication, there are 2 types of files - physical and logical
  */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
                  unsigned long physical_sn){
     File file = malloc(sizeof(*file));
     if(file == NULL){
-        printf("(File)--> Creating file - Allocation Error (1) \n");
         return NULL;
     }
 
     file->file_id = malloc(sizeof(char)* (FILE_ID_LEN + 1));
     if(file->file_id == NULL){
-        printf("(File)--> Creating file - Allocation Error (2) \n");
         free(file);
         return NULL;
     }
@@ -81,7 +79,6 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
 
     file->blocks_list = listCreate(copy_block_info , free_block_info);
     if(file->blocks_list == NULL){
-        printf("(File)--> Adding block to file - Allocation Error (3) \n");
         free(file->file_id);
         free(file);
         return NULL;
@@ -99,9 +96,10 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
     return file;
 }
 
-
 /*
  *  file_destroy - Destroys and frees space of a file structure
+ *
+ *  @file - Pointer to the file object to be destroyed
  */
 void file_destroy(File file){
     assert(file);
@@ -111,7 +109,9 @@ void file_destroy(File file){
 }
 
 /*
- *  file_get_SN - returns the SN of the file
+ *  file_get_SN - Returns the SN of the file
+ *
+ *  @file - Pointer to the file object
  */
 unsigned long file_get_SN(File file){
     assert(file);
@@ -119,7 +119,9 @@ unsigned long file_get_SN(File file){
 }
 
 /*
- * file_get_ID - returns the hashed ID of the file
+ * file_get_ID - Returns pointer to the hashed ID of the file
+ *
+ * @file - Pointer to the file object
  */
 char* file_get_ID(File file){
     assert(file);
@@ -127,7 +129,9 @@ char* file_get_ID(File file){
 }
 
 /*
- *  file_get_depth - returns the depth of the file in the hierarchy
+ *  file_get_depth - Returns the depth of the file in the hierarchy
+ *
+ *  @file - Pointer to the file object
  */
 unsigned int file_get_depth(File file){
     assert(file);
@@ -136,18 +140,31 @@ unsigned int file_get_depth(File file){
 
 /*
  *  file_get_num_blocks - returns the number of blocks the file contains
+ *
+ *  @file - Pointer to the file object
  */
 int file_get_num_blocks(File file){
     assert(file);
     return file->num_blocks;
 }
 
+/*
+ *  file_get_num_blocks - returns the number of blocks the file contains
+ *
+ *  @file - Pointer to the file object
+ */
 ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
     assert(file);
     file->dir_sn = dir_sn;
     return SUCCESS;
 }
 
+/*
+ *  file_set_physical_sn - Set the value of the physical serial number of the file object
+ *
+ *  @file             - Pointer to the file object
+ *  @physical_file_sn - value of the serial number to be set
+ */
 ErrorCode file_set_physical_sn(File file , unsigned long physical_file_sn){
     assert(file);
     file->physical_sn = physical_file_sn;
@@ -155,7 +172,9 @@ ErrorCode file_set_physical_sn(File file , unsigned long physical_file_sn){
 }
 
 /*
+ *  file_set_logical_flag - Set the File object to be a logical file
  *
+ *  @file - Pointer to the file object
  */
 ErrorCode file_set_logical_flag(File file){
     file->flag = 'L';
@@ -164,7 +183,11 @@ ErrorCode file_set_logical_flag(File file){
 
 
 /*
+ *  file_add_block - Add block to the file object that contains it
  *
+ *  @file       - Pointer to the file object
+ *  @block_id   - hashed id of the block
+ *  @block_size - size of the block
  */
 ErrorCode file_add_block(File file , char* block_id , int block_size){
     if(file == NULL || block_id == NULL || block_size < 0){
@@ -173,12 +196,10 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
 
     Block_Info bi = malloc(sizeof(*bi));
     if(bi == NULL){
-        printf("(File)--> Adding block to file - Allocation Error (1) \n");
         return OUT_OF_MEMORY;
     }
     bi->id =  malloc(sizeof(char)*(strlen(block_id) +1));
     if(bi->id == NULL){
-        printf("(File)--> Adding block to file - Allocation Error (2) \n");
         free(bi);
         return OUT_OF_MEMORY;
     }
@@ -187,7 +208,6 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     ListResult res = listInsertLast(file->blocks_list , bi);
 
     if(res != LIST_SUCCESS){
-        printf("(File)--> Adding block to file - List of files containing block allocation Error (3) \n");
         free(bi->id);
         free(bi);
         return OUT_OF_MEMORY;
@@ -199,8 +219,5 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     return SUCCESS;
 }
 
-
-/* **************** END *************** File STRUCT Functions **************** END ***************** */
-
-
+/* ******************** END ******************** File STRUCT Functions ******************** END ********************* */
 #endif //DEDUPLICATION_PROJECT_FILE_H

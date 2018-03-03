@@ -4,6 +4,7 @@
 
 #ifndef DEDUPLICATIONPROJECT_HASHTABLEF_H
 #define DEDUPLICATIONPROJECT_HASHTABLEF_H
+/* **************************************************** INCLUDES **************************************************** */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,11 +12,17 @@
 #include <string.h>
 #include <assert.h>
 
+/* **************************************************** INCLUDES **************************************************** */
+/* ****************************************************************************************************************** */
+/* **************************************************** DEFINES ***************************************************** */
+
 #define GROWTH_FACTOR 2
 #define INIT_SIZE 5007
 #define BLOCKS_IN_FILE_SIZE 300
 typedef void* DataF;
-
+/* **************************************************** DEFINES ***************************************************** */
+/* ****************************************************************************************************************** */
+/* ******************* START ******************** HashTable Definition ******************** START ******************* */
 struct entryf_t {
     char *key;
     DataF data;
@@ -29,19 +36,21 @@ struct hashtablef_t {
     EntryF *table; // array of pointers to Entries
 };
 typedef struct hashtablef_t *HashTableF;
-
-/* **************** END *************** HashTable Definition **************** END **************** */
-/* *********************************************************************************************** */
-/* *********************************************************************************************** */
-/* *************** START ************** HashTable Functions *************** START **************** */
-/* Create a new HashTable. */
+/* ********************* END ******************** HashTable Definition********************* END ********************* */
+/* ****************************************************************************************************************** */
+/* ****************************************************************************************************************** */
+/* ******************** START ******************** HashTable Functions ******************** START ******************* */
+/*
+ * ht_createF - creates a hashtable for the requested type of objects (which determines its size)
+ *
+ * @type - can be one of 3 : 'B' for blocks , 'F' for files and 'D' for directories
+ */
 HashTableF ht_createF(char type) {
     HashTableF ht = NULL;
 
     /* Allocate the table itself */
     ht = malloc(sizeof(*ht));
     if(!ht){ //check allocation was successful
-        printf("(HashTableF)--> Creating HashTable - Allocation Error (1) \n");
         return NULL;
     }
     switch(type){
@@ -53,24 +62,23 @@ HashTableF ht_createF(char type) {
             break;
     }
     ht->num_of_elements = 0;
-
     /* Allocate pointers to the head nodes */
     ht -> table = malloc(sizeof(EntryF) * (ht->size_table));
     if(!ht -> table ){ //check array od pointers was allocated successfully
-        printf("(HashTableF)--> Creating HashTable - Allocation Error (2) \n");
         free(ht);
         return NULL;
     }
-
     for(int i = 0; i < (ht->size_table) ; i++ ){
         ht->table[i] = NULL;
     }
-    printf("(HashTableF)--> Created HashTable Successfully of size %lu \n" , ht->size_table);
     return ht;
 }
 
 /*
- * ht_hash - Given a key (string) Generates a Hash Value by which it will be stored in the table
+ * ht_hashF - Given a key (string) Generates a Hash Value by which it will be stored in the table
+ *
+ * @ht  - the hashtable in which the key will be saved
+ * @key - the key for which we want to get the hashed value in the hashtable
  */
 long int ht_hashF( HashTableF ht, char *key ) {
     unsigned long int hashval;
@@ -88,19 +96,16 @@ long int ht_hashF( HashTableF ht, char *key ) {
 
 /*
  * ht_newpair - Creates a key-value pair
- *                  - For block - size parameter will contain the block size
- *                  - For File - size parameter will be -1
+ *              the key is the file id and the value is NULL
  */
 EntryF ht_newpairF(char *key){
     EntryF newpair  = malloc(sizeof(*newpair));
     if(newpair == NULL){
-        printf("(HashTableF)--> Creating new pair - Allocation Error (1) \n");
         return NULL;
     }
 
     newpair->key = malloc(sizeof(char)*(strlen(key)+1));
     if(newpair->key == NULL){
-        printf("(HashTableF)--> Creating new pair - Allocation Error (2) \n");
         free(newpair);
         return NULL;
     }
@@ -111,7 +116,10 @@ EntryF ht_newpairF(char *key){
 }
 
 /*
- * ht_set - Insert a key-value pair into a hash table.
+ *  ht_setF - Insert a key-value pair into a hash table (General function thus
+ *
+ * @ht  - the hashtable to which the object will be added
+ * @key - the hashed id of the file
  */
 EntryF ht_setF(HashTableF ht, char *key) {
     EntryF newpair = NULL;
@@ -134,7 +142,6 @@ EntryF ht_setF(HashTableF ht, char *key) {
     } else { /* Nope, could't find it.  Time to grow a pair. */
         newpair = ht_newpairF(key); //allocate new pair
         if(newpair == NULL){
-            printf("(HashTableF)--> Adding Pair to HT - Allocation Error (1) \n");
             return NULL;
         }
         /* We're at the start of the linked list in this hash_key. */
@@ -155,7 +162,10 @@ EntryF ht_setF(HashTableF ht, char *key) {
 }
 
 /*
- * ht_get - Retrieve pointer for block/file element with corresponding key in hash table.
+ * ht_getF - Retrieve pointer for file element with corresponding key in hash table
+ *
+ * @ht  - the hashtable to which the object will be added
+ * @key - the hashed id of the object
  */
 DataF ht_getF(HashTableF ht, char *key ) {
     long int hash_key = ht_hashF(ht, key);
@@ -177,19 +187,19 @@ DataF ht_getF(HashTableF ht, char *key ) {
 }
 
 /*
- * ht_free - freeing all allocations of HashTable.
+ * hashTableF_destroy - Freeing all allocations of HashTable
+ *
+ * @ht - hashtable to destroy
  */
 void hashTableF_destroy(HashTableF ht){
     long num_of_elements = ht->num_of_elements;
     //long size_of_lists = 0;
     struct entryf_t* temp_to_free;
     // Remove lists elements of each HashTable cell
-    for(int i = 0 ; i < num_of_elements ; i++){
-        // free each list element of cell i
+    for(int i = 0 ; i < num_of_elements ; i++){ // free each list element of cell i
         while(ht->table[i]) {
             temp_to_free = ht->table[i];
             ht->table[i] = temp_to_free->next;
-
             // Destroy elements fields
             free(temp_to_free->key);
             free(temp_to_free);
@@ -199,4 +209,8 @@ void hashTableF_destroy(HashTableF ht){
     free(ht->table);
     free(ht);
 }
+
+/* ********************* END ********************* HashTable Functions ********************* END ******************** */
+
+
 #endif //DEDUPLICATIONPROJECT_HASHTABLEF_H

@@ -4,7 +4,7 @@
 
 #ifndef DEDUPLICATIONPROJECT_EXECUTFUNCTIONS_H
 #define DEDUPLICATIONPROJECT_EXECUTFUNCTIONS_H
-/************************************************** Global Params *****************************************************/
+/* ************************************************ Global Params *************************************************** */
 /* Serial number for counting the elements which insert to the system */
 unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0;
 
@@ -14,7 +14,7 @@ HashTable ht_files , ht_blocks , ht_dirs;
 /* Root Directory */
 Dir root_directory;
 
-/************************************************** Helper Functions **************************************************/
+/* ************************************************ Helper Functions ************************************************ */
 /* Compare between current buffer and string of "Z"*/
 bool check_12_z(char buff[STR_OF_Z]){
     for (int i = 0; i < STR_OF_Z ; ++i) {
@@ -25,7 +25,7 @@ bool check_12_z(char buff[STR_OF_Z]){
     return true;
 }
 
-/************************************************** Parsing Functions **************************************************/
+/* ************************************************ Parsing Functions *********************************************** */
 /*
  *  Extract fields from input file.
  *     - Get value from each type needed:

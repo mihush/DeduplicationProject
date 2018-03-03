@@ -7,9 +7,8 @@
 
 #include "HashTableF.h"
 #include "Utilities.h"
-#include <assert.h>
 
-/* *************** START ************** Block STRUCT Definition *************** START *************** */
+/* ******************* START ****************** Block STRUCT Definition ****************** START ******************** */
 /*
  * Definition of a block structure:
  *                  - block_sn -> a running index on all blocks read from the file system
@@ -27,21 +26,24 @@ struct block_t{
 };
 typedef struct block_t *Block;
 
-/* **************** END *************** Block STRUCT Definition **************** END **************** */
-/* ************************************************************************************************** */
-/* ************************************************************************************************** */
-/* *************** START ************** Block STRUCT Functions **************** START *************** */
+/* ******************** END ******************** Block STRUCT Definition ******************** END ******************* */
+/* ****************************************************************************************************************** */
+/* ****************************************************************************************************************** */
+/* ******************* START ******************* Block STRUCT Functions ******************* START ******************* */
 /*
  *  blockCreate - Creates a new Block with:
  *                      - a given serial number
  *                      - a hashed id
  *                      - creates an empty files list
  *                      - zeros the counter that contains the amount of files sharing this block
+ *
+ * @block_id   - the hashed id of the block
+ * @block_sn   - serial number of the block
+ * @block_size - the size of the block
  */
 Block block_create(char* block_id , unsigned long block_sn , unsigned int block_size){
     Block block = malloc(sizeof(*block)); //create a block
     if(block == NULL){ //Check memory allocation was successful
-        printf("(Block)--> Adding block to file - Allocation Error (1) \n");
         return NULL;
     }
 
@@ -64,9 +66,10 @@ Block block_create(char* block_id , unsigned long block_sn , unsigned int block_
     return block;
 }
 
-
 /*
  *  block_destroy - Destroys and frees space of a block structure
+ *
+ *  @block - pointer to the block structure to be destroyed
  */
 void block_destroy(Block block){
     assert(block);
@@ -77,6 +80,8 @@ void block_destroy(Block block){
 
 /*
  *  block_get_SN - returns the SN of the block
+ *
+ *  @block - pointer to the block structure
  */
 long block_get_SN(Block block){
     assert(block);
@@ -85,6 +90,8 @@ long block_get_SN(Block block){
 
 /*
  *  block_get_ID - Returns the hashed id of the block
+ *
+ *  @block - pointer to the block structure
  */
 char* block_get_ID(Block block){
     assert(block);
@@ -93,6 +100,9 @@ char* block_get_ID(Block block){
 
 /*
  *  block_add_file - adds the file containing the block to the files list saved in the block
+ *
+ *  @block   - pointer to the block structure to which we want to add the file
+ *  @file_id - the id of the file that contains the block
  */
 ErrorCode block_add_file(Block block , char* file_id){
     if(file_id == NULL || block == NULL){ //Check input is valid
@@ -105,11 +115,10 @@ ErrorCode block_add_file(Block block , char* file_id){
     }
 
     (block->shared_by_num_files)++;
-//    printf("(Block)--> Containing file was added to block Successfully:\n");
-//    printf("            - Block SN   : %lu \n" , block->block_sn);
-//    printf("            - File  ID   : %s \n" , file_id);
     return SUCCESS;
 }
+
+
 /* **************** END *************** Block STRUCT Functions ***************** END **************** */
 
 #endif //DEDUPLICATION_PROJECT_BLOCK_H

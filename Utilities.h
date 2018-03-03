@@ -17,7 +17,7 @@ typedef enum{
 #include <string.h>
 #include <stdbool.h>
 
-/********************************************* Definitions& Magic Numbers *********************************************/
+/* ******************************************* Definitions& Magic Numbers ******************************************* */
 /* Magic Numbers */
 #define STR_OF_Z 12
 #define DIR_NAME_LEN 11
@@ -35,15 +35,10 @@ typedef enum{
 #define FILE_NAME_LEN 5
 #define NUM_OF_INPUT_FILE 208
 
-/* **************** START **************** object_info struct **************** START **************** */
+/* ******************** START ******************** object_info struct ******************** START ******************** */
 
 /*
  * Definition of a object_info structure:
- *
- *
- *
- *
- *
  *
  */
 struct object_info{ //helper struct
@@ -54,7 +49,9 @@ struct object_info{ //helper struct
 };
 typedef struct object_info* Object_Info;
 
-
+/*
+ *
+ */
 Object_Info object_info_create(char* id , unsigned long sn , char* parent_id , char type){
     Object_Info oi = malloc(sizeof(*oi));
     if(oi == NULL){
@@ -84,7 +81,9 @@ Object_Info object_info_create(char* id , unsigned long sn , char* parent_id , c
     return oi;
 }
 
-
+/*
+ *
+ */
 static ListElement object_info_copy(ListElement object_info){
     assert(object_info);
     Object_Info oi = (Object_Info)(object_info);
@@ -116,6 +115,9 @@ static ListElement object_info_copy(ListElement object_info){
     return oi_copy;
 }
 
+/*
+ *
+ */
 static void object_info_destroy(ListElement object_info){
     free(((Object_Info)(object_info))->object_id);
     free(((Object_Info)(object_info))->parent_dir_id);
@@ -123,8 +125,8 @@ static void object_info_destroy(ListElement object_info){
 }
 
 
-/* ***************** END ***************** object_info struct ***************** END ***************** */
-/* **************** START **************** block_info struct **************** START **************** */
+/* ********************* END ********************* object_info struct ********************* END ********************* */
+/* ******************** START ******************** block_info struct ******************** START ********************* */
 /*
  * Definition of a block info structure:
  *                  - block_sn -> a running index on all blocks read from the file system
@@ -139,6 +141,9 @@ struct block_info{ //helper struct
 };
 typedef struct block_info* Block_Info;
 
+/*
+ *
+ */
 static ListElement copy_block_info(ListElement block_info){
     assert(block_info);
     Block_Info bi = (Block_Info)(block_info);
@@ -158,10 +163,13 @@ static ListElement copy_block_info(ListElement block_info){
 
 }
 
+/*
+ *
+ */
 static void free_block_info(ListElement block_info){
     free(((Block_Info)(block_info))->id);
     free(block_info);
 }
 
-/* ***************** END ***************** block_info struct ***************** END ***************** */
+/* ********************** END ********************* block_info struct ********************* END ********************* */
 #endif //DEDUPLICATIONPROJECT_UTILITIES_H
