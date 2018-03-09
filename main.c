@@ -13,8 +13,9 @@ unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0, physical_files_sn = 0;
 HashTable ht_files = NULL , ht_blocks = NULL , ht_dirs = NULL ,ht_physical_files = NULL;
 
 /* Root Directory */
-Dir roots[NUM_INPUT_FILES];
-char dedup_type = 'F';
+//Dir roots[NUM_INPUT_FILES];
+Dir* roots = NULL;
+char dedup_type;
 
 /* ************************************************ Helper Functions ************************************************ */
 /* Compare between current buffer and string of "Z"*/
@@ -25,6 +26,47 @@ bool check_12_z(char buff[STR_OF_Z]){
         }
     }
     return true;
+}
+
+/**/
+char** get_input_file_names(int* num_of_input_files ,
+                          char** current_working_directory , char* dedup_type){
+    char line[MAX_LINE_LEN];
+    FILE* input_params_file = fopen("input_params.txt","r");
+    if(input_params_file == NULL){ //check the file was opened successfully - if not terminate
+        printf("(Parser)--> Can't open input_params file/s =[ \n");
+        return NULL;
+    }
+
+    //Read First Line - Deduplication Type
+    fgets(line , MAX_LINE_LEN , input_params_file);
+    *dedup_type = line[0];
+    printf("---> %c\n" , *dedup_type);
+
+    //Read Second line - Input Files Directory
+    fgets(line , MAX_LINE_LEN , input_params_file);
+    *current_working_directory = calloc(strlen(line) + 1 , sizeof(char));
+    strcpy(*current_working_directory , line);
+    int last_char_idx = strlen(*current_working_directory) - 1;
+    (*current_working_directory)[last_char_idx] = '\0';
+    printf("---> %s",*current_working_directory);
+
+    //Read Third Line - Number of input files
+    fgets(line , MAX_LINE_LEN , input_params_file);
+    *num_of_input_files = atoi(line);
+    printf("---> %d\n" , *num_of_input_files);
+
+    //Read the rest of the line to get all file names
+    char** files_to_read = (char**)malloc((*num_of_input_files) * sizeof(char*));
+    for(int i = 0 ; i < *num_of_input_files ; i++){
+        fgets(line , MAX_LINE_LEN , input_params_file);
+        files_to_read[i] = (char*)malloc((strlen(line) + 1) * sizeof(char));
+        strcpy(files_to_read[i] , line);
+        files_to_read[i][strlen(files_to_read[i])-1] = '\0';
+        printf("-----> %s\n",files_to_read[i]);
+    }
+
+    return files_to_read;
 }
 
 /* *********************************************** Parsing Functions ************************************************ */
@@ -72,16 +114,18 @@ char case_6_file_attribute(char buff[BUFFER_SIZE]){
 }
 
 /* FILE ID */
-char* case_7_hash_file_id(char buff[BUFFER_SIZE], int ind_num_of_file){
+char* case_7_hash_file_id(char buff[BUFFER_SIZE], int ind_num_of_file, char* file_system_id){
     char* file_id = calloc(FILE_ID_LEN , sizeof(char)); // The value is 15 chars + 2 chars for index +1 for eol (end of line)
     if(file_id == NULL){
         return NULL;
     }
     //only first 15 digits depict the hashed directory name
-    file_id[0] = (LETTERS_CHAR + ind_num_of_file);
-    file_id[1] = '_';
-    strncpy((file_id + 2) , buff , strlen(buff) - 1);
-    file_id[strlen(buff) + 2] = '\0';
+    strcpy(file_id , file_system_id);
+    strcat(file_id , buff);
+//    file_id[0] = (LETTERS_CHAR + ind_num_of_file);
+//    file_id[1] = '_';
+//    strncpy((file_id + 2) , buff , strlen(buff) - 1);
+//    file_id[strlen(buff) + 2] = '\0';
     return file_id;
 }
 
@@ -95,6 +139,7 @@ void case_13_VS(FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_coun
     *read_empty_line_chucnks = false;
     char block_id[BLOCK_ID_LEN];
     unsigned int block_size = 0;
+    Block new_block = NULL;
 
     while((read_block == false) && (*read_empty_line_chucnks == false)){
         switch ((int)(buff[0])) { //check next line
@@ -151,11 +196,13 @@ void case_13_VS(FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_coun
                 strncpy(size, &buff[(CHUNKE_ID_LEN + 1)], CHUNKE_SIZE_LEN);
             }
             block_size = (int)strtol(size,(char **)NULL, 10);
+
             file_add_block(file_obj , block_id , block_size);
             if(dedup_type == 'F'){
                 file_add_block(file_obj_p , block_id , block_size);
             }
-            Block new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B',
+
+            new_block = ht_set(ht_blocks , block_id , 1 , blocks_sn , block_size , 'B',
                                      &object_exists , 0 , dedup_type);
             block_add_file(new_block , file_obj->file_id);
             if(object_exists == false){
@@ -247,7 +294,7 @@ void update_parent_dir_sn(List previous , List current , int global_depth , int 
     }
 }
 
-void print_ht_to_CSV(char dedup_type , char** files_to_read){
+void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_files){
     Entry pair = NULL;
     File temp_file = NULL;
     Block temp_block = NULL;
@@ -255,7 +302,7 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
     FILE *results_file = NULL;
     char* fileName = malloc(350*sizeof(char));
     fileName = strcpy(fileName , "Parsing_Results_");
-    int num_of_input_files = NUM_INPUT_FILES;
+    //int num_of_input_files = NUM_INPUT_FILES;
     for(int i = 0 ; i < num_of_input_files ; i++){
         char file_proc[5];
         strncpy(file_proc , files_to_read[i] , 4);
@@ -286,8 +333,13 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read){
     }
 
     fprintf(results_file ,"# Input files: ");
-    for(int i =0 ; i < NUM_INPUT_FILES ; i++){
-        fprintf(results_file ,"%s" , files_to_read[i]);
+    for(int i =0 ; i < num_of_input_files ; i++){
+        if(i == num_of_input_files - 1){
+            fprintf(results_file ,"%s" , files_to_read[i]);
+        } else{
+            fprintf(results_file ,"%s," , files_to_read[i]);
+        }
+
     }
     fprintf(results_file ,"\n");
 
@@ -425,7 +477,6 @@ int main(){
         printf("(Parser)--> Failed Allocating Hash Tables in parser =[ \n");
         return 0;
     }
-    printf("\n\n\n");
 
     /// Define parameters for global data Manipulation (over entire input file)
     List curr_depth_objects = NULL , previous_depth_objects = NULL;
@@ -434,17 +485,23 @@ int main(){
     previous_depth_objects = listCreate(object_info_copy , object_info_destroy);
 
     /// Define Files to be read
-    char* files_to_read[NUM_INPUT_FILES];
-    //char* current_working_directory  = "/home/polinam/27_01_18/";
-    char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
-    //char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
-    files_to_read[0] = "0119";
-    //files_to_read[1] = "0119";
+//    char* files_to_read[NUM_INPUT_FILES];
+//    //char* current_working_directory  = "/home/polinam/27_01_18/";
+//    char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
+//    //char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
+//    files_to_read[0] = "0119";
+//    //files_to_read[1] = "0119";
+    int num_input_files = 0;
+    char* current_working_directory = NULL;
+    char** files_to_read = NULL;
+    files_to_read = get_input_file_names(&num_input_files, &current_working_directory, &dedup_type);
+    roots = malloc(num_input_files* sizeof(*roots));
+
     char* current_file = NULL;
     bool finished_reading_file = false;
 
-
     /// Define parameters for reading data regarding SINGLE OBJECT
+    char file_system_ID[FILE_SYSTEM_ID_LEN+2];
     char* parent_dir_id = NULL; // Hashed ID of parent Directory
     unsigned short depth = 0; //Depth of current object in the hierarchy
     unsigned int file_size = 0; //File Size (if the object is a file)
@@ -459,11 +516,11 @@ int main(){
     /* ---------------------------------------------------------------------------------------- */
     /* ------------------------------------- File Reading ------------------------------------- */
     /* Go over all file systems */
-    for (int i = 0; i < NUM_INPUT_FILES ; ++i) { /* (1) Read an Input File */
-        printf("(Parser)--> ----- Opening File ----- \n");
+    for (int i = 0; i < num_input_files ; ++i) { /* (1) Read an Input File */
         current_file = calloc((strlen(current_working_directory) + strlen(files_to_read[i]) + 1) , sizeof(char));
         strcpy(current_file , current_working_directory);
         strcat(current_file , files_to_read[i]);
+        printf("(Parser)--> ----- Opening File %s ----- \n" , current_file);
         input_file = fopen(current_file , "r");
         if(input_file == NULL){ //check the file was opened successfully - if not terminate
             printf("(Parser)--> Can't open input file/s =[ \n");
@@ -472,6 +529,14 @@ int main(){
 
         free(current_file);
         printf("(Parser)-->  ----- Start Reading the file ----- \n");
+        fgets(buff, BUFFER_SIZE , input_file); //Read First Line
+        fgets(buff, BUFFER_SIZE , input_file); //Read Second Line
+        fgets(buff, BUFFER_SIZE , input_file); //READFile System ID - get last 3 digits
+        printf("%s\n" , buff);
+        strncpy(file_system_ID , buff + 9 , 3);
+        file_system_ID[FILE_SYSTEM_ID_LEN]='_';
+        file_system_ID[FILE_SYSTEM_ID_LEN + 1]='\0';
+
         /* Skip till the first empty line - over the file system description */
         do{
             fgets(buff, BUFFER_SIZE , input_file);
@@ -520,7 +585,7 @@ int main(){
                         }
                         break;
                     case 7: /* FILE ID */
-                        object_id = case_7_hash_file_id(buff , i);
+                        object_id = case_7_hash_file_id(buff , i , file_system_ID);
                         //Adding Directory Object to HashTable
                         if(obj_type == 'D'){
                             if( dir_sn == 0 || set_root == true){ //Creating Dummy Root Node using the Parent_dir_id of the first object in the input file
@@ -529,10 +594,9 @@ int main(){
                                     printf("(Parser) --> Can't Allocate place for ROOT_ID \n");
                                     break;
                                 }
-                                root_id[0] = (LETTERS_CHAR + i);
-                                root_id[1] = '_';
-                                strncpy((root_id + 2) , "root" , 4);
-                                root_id[7] = '\0';
+                                strcpy(root_id , file_system_ID);
+                                strcat(root_id , "root");
+                                root_id[8] = '\0';
                                 roots[i] = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already , 0 , dedup_type);
                                 //root_directory = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already);
                                 dir_sn++;
@@ -606,7 +670,7 @@ int main(){
     } /* (1) Read an Input File */
 
     printf("(Parser) --> Printing Results ................\n");
-    print_ht_to_CSV(dedup_type, files_to_read);
+    print_ht_to_CSV(dedup_type, files_to_read , num_input_files);
 
     //Free All Hash tables and Lists
     hashTable_destroy(ht_files , 'F');
@@ -615,6 +679,11 @@ int main(){
     hashTable_destroy(ht_physical_files , 'F');
     listDestroy(curr_depth_objects);
     listDestroy(previous_depth_objects);
-
+    free(current_working_directory);
+    for(int i = 0 ; i < num_input_files ; i++){
+        free(files_to_read[i]);
+    }
+    free(files_to_read);
+    free(roots);
     return 0;
 }

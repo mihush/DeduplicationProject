@@ -249,7 +249,6 @@ void data_destroy(Data data, char flag){
         case 'B':
             block_destroy((Block)data);
             break;
-        //TODO add case of Physical file - do we really need this ?
     }
 }
 
@@ -288,8 +287,7 @@ void hashTable_destroy(HashTable ht , char flag){
  *                         returns true if no physical file exists
  */
 Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
-                  File file , File file_obj_p,
-                  unsigned long* physical_files_sn){
+                  File file , File file_obj_p, unsigned long* physical_files_sn){
     assert(file && file_obj_p);
     bool physical_file_exist = false , blocks_differ = false;
     Block_Info first_block = (Block_Info)listGetFirst(file->blocks_list);
@@ -298,7 +296,7 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
 
     /* ---------------------------------- Iterate over HT_PHYSICAL_FILES ---------------------------------- */
     File temp_file = NULL;
-    Entry current = ht_physical_files->table[hash_key]; //get the cell int the hashtable for the possible file
+    Entry current = ht_physical_files->table[hash_key]; //get the cell in the hashtable for the possible file
     while(current != NULL && current->key != NULL){ //go over all files in the cell found above
         temp_file = ((File)(current->data));
         if(strcmp(file->file_id , temp_file->file_id) == 0){ //It's the same file
@@ -349,17 +347,21 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
         // hash by first block id
         hash_key = ht_hash(ht_physical_files , first_block_id);
         Entry ent = ht_physical_files->table[hash_key];
+
         Entry newpair  = malloc(sizeof(*newpair));
         assert(newpair);
+
         newpair->key = malloc(sizeof(char)*(strlen(first_block_id) + 1));
         assert(newpair->key);
+
         newpair->key = strcpy(newpair->key , first_block_id);
         newpair->data = file_obj_p;
+
         //Add the file in the head of the list
         newpair->next = ent;
         ht_physical_files->table[hash_key] = newpair;
     }
-    /*-------------------- Adding the file to logical hash table anyway -----------------------------*/
+    /* -------------------- Adding the file to logical hash table anyway ----------------------------- */
 
     char* key = malloc(sizeof(char)*(strlen(file->file_id) + 1));
     strcpy(key , file->file_id);
@@ -411,7 +413,7 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
         free(key);
         return newpair_l->data;
     }
-    free(key);
+    /* -------------------- Adding the file to logical hash table anyway ----------------------------- */
 }
 
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */
