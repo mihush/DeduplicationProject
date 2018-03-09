@@ -77,7 +77,7 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
     if(dir == NULL){
         return NULL;
     }
-    dir->dir_id = malloc((sizeof(char)*DIR_NAME_LEN));
+    dir->dir_id = malloc((sizeof(char)*(strlen(dir_id) + 1)));
     if(!(dir->dir_id)){
         free(dir);
         return NULL;
@@ -115,7 +115,7 @@ ErrorCode dir_set_parent_dir_sn(Dir dir , unsigned long sn){
 /*
  * dir_destroy - Destroys struct of Directory
  *
- * @dir - Pointer tot he directory structure that should be destroyed
+ * @dir - Pointer to the directory structure that should be destroyed
  */
 void dir_destroy(Dir dir){
     assert(dir);

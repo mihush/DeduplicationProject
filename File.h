@@ -105,6 +105,7 @@ void file_destroy(File file){
     assert(file);
     free(file->file_id);
     listDestroy(file->blocks_list);
+    hashTableF_destroy(file->files_ht);
     free(file);
 }
 
