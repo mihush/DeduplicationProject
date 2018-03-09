@@ -66,6 +66,7 @@ char** get_input_file_names(int* num_of_input_files ,
         printf("-----> %s\n",files_to_read[i]);
     }
 
+    fclose(input_params_file);
     return files_to_read;
 }
 
@@ -122,6 +123,8 @@ char* case_7_hash_file_id(char buff[BUFFER_SIZE], int ind_num_of_file, char* fil
     //only first 15 digits depict the hashed directory name
     strcpy(file_id , file_system_id);
     strcat(file_id , buff);
+    int id_len = strlen(file_id);
+    file_id[id_len] = '\0';
 //    file_id[0] = (LETTERS_CHAR + ind_num_of_file);
 //    file_id[1] = '_';
 //    strncpy((file_id + 2) , buff , strlen(buff) - 1);
