@@ -104,7 +104,7 @@ EntryF ht_newpairF(char *key){
         return NULL;
     }
 
-    newpair->key = malloc(sizeof(char)*(strlen(key)+1));
+    newpair->key = calloc((strlen(key)+1) , sizeof(char));
     if(newpair->key == NULL){
         free(newpair);
         return NULL;

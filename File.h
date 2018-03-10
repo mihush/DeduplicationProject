@@ -198,7 +198,7 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     if(bi == NULL){
         return OUT_OF_MEMORY;
     }
-    bi->id =  malloc(sizeof(char)*(strlen(block_id) +1));
+    bi->id =  calloc((strlen(block_id) +1) , sizeof(char));
     if(bi->id == NULL){
         free(bi);
         return OUT_OF_MEMORY;

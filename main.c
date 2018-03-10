@@ -146,7 +146,7 @@ void case_13_VS(FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_coun
                 block_id[STR_OF_Z] = '\0';
                 strncpy(size, &buff[(STR_OF_Z + 1)], CHUNKE_SIZE_LEN);
             } else {
-                //only first 10 digits are block_id
+                //only first 10 digits are  block_id
                 strncpy(block_id, buff, 10);
                 block_id[CHUNKE_ID_LEN] = '\0';
                 strncpy(size, &buff[(CHUNKE_ID_LEN + 1)], CHUNKE_SIZE_LEN);
@@ -426,8 +426,8 @@ int main(){
     /// Define Files to be read
     char* files_to_read[NUM_INPUT_FILES];
     //char* current_working_directory  = "/home/polinam/27_01_18/";
-    char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
-    //char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
+    //char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
+    char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
     files_to_read[0] = "0119";
     //files_to_read[1] = "0119";
     char* current_file = NULL;

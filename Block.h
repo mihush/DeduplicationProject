@@ -47,7 +47,7 @@ Block block_create(char* block_id , unsigned long block_sn , unsigned int block_
         return NULL;
     }
 
-    block->block_id = malloc(sizeof(char)*(BLOCK_ID_LEN + 1)); //allocate string for block_id
+    block->block_id = calloc((BLOCK_ID_LEN + 1) , sizeof(char)); //allocate string for block_id
     if(block->block_id == NULL){ //check successful allocation
         free(block);
         return NULL;
