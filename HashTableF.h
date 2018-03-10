@@ -26,7 +26,7 @@ typedef void* DataF;
 struct entryf_t {
     char *key;
     DataF data;
-    struct entryf_t *next;//Chain-hashing solution. ptr to the next element
+    struct entryf_t *next;//Chain-hashing solution. Pointer to the next element
 };
 typedef struct entryf_t *EntryF;
 
@@ -64,7 +64,7 @@ HashTableF ht_createF(char type) {
     ht->num_of_elements = 0;
     /* Allocate pointers to the head nodes */
     ht -> table = malloc(sizeof(EntryF) * (ht->size_table));
-    if(!ht -> table ){ //check array od pointers was allocated successfully
+    if(!ht -> table ){ //check array of pointers was allocated successfully
         free(ht);
         return NULL;
     }
@@ -81,7 +81,7 @@ HashTableF ht_createF(char type) {
  * @key - the key for which we want to get the hashed value in the hashtable
  */
 long int ht_hashF( HashTableF ht, char *key ) {
-    unsigned long int hashval;
+    unsigned long int hashval = 0;
     int i = 0;
 
     /* Convert our string to an integer */
@@ -109,7 +109,7 @@ EntryF ht_newpairF(char *key){
         free(newpair);
         return NULL;
     }
-    strcpy(newpair->key , key);
+    newpair->key = strcpy(newpair->key , key);
     newpair->data = NULL;
     newpair->next = NULL;
     return newpair;
@@ -139,7 +139,7 @@ EntryF ht_setF(HashTableF ht, char *key) {
     if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
         //Return the pointer to the Block/File that already exists in the hash
         return next;
-    } else { /* Nope, could't find it.  Time to grow a pair. */
+    } else { /* Nope, couldn't find it.  Time to grow a pair. */
         newpair = ht_newpairF(key); //allocate new pair
         if(newpair == NULL){
             return NULL;
@@ -192,11 +192,11 @@ DataF ht_getF(HashTableF ht, char *key ) {
  * @ht - hashtable to destroy
  */
 void hashTableF_destroy(HashTableF ht){
-    long num_of_elements = ht->num_of_elements;
+    long size_table = ht->size_table;
     //long size_of_lists = 0;
     struct entryf_t* temp_to_free;
     // Remove lists elements of each HashTable cell
-    for(int i = 0 ; i < num_of_elements ; i++){ // free each list element of cell i
+    for(int i = 0 ; i < size_table ; i++){ // free each list element of cell i
         while(ht->table[i]) {
             temp_to_free = ht->table[i];
             ht->table[i] = temp_to_free->next;

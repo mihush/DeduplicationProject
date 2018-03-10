@@ -119,6 +119,6 @@ ErrorCode block_add_file(Block block , char* file_id){
 }
 
 
-/* **************** END *************** Block STRUCT Functions ***************** END **************** */
+/* ******************** END ******************** Block STRUCT Functions ******************** END ******************** */
 
 #endif //DEDUPLICATION_PROJECT_BLOCK_H

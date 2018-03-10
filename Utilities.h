@@ -23,7 +23,7 @@ typedef enum{
 #define DIR_NAME_LEN 11
 #define DIR_NAME_HASH 10
 #define BLOCK_ID_LEN 13
-#define FILE_ID_LEN 22
+#define FILE_ID_LEN 25
 #define BUFFER_SIZE 255
 #define LETTERS_CHAR 48
 #define LINE_SPACE 10
@@ -31,9 +31,12 @@ typedef enum{
 #define CHUNKE_SIZE_LEN 6
 #define DIR_SIZE 0
 #define FILE_ATTRIBUTE_DIRECTORY 0x00000010
-#define ROOT_ID_LEN 8
+#define ROOT_ID_LEN 10
 #define FILE_NAME_LEN 5
 #define NUM_OF_INPUT_FILE 208
+#define MAX_LINE_LEN 1500
+#define FILE_SYSTEM_ID_LINE_LEN 12
+#define FILE_SYSTEM_ID_LEN 3
 
 /* ******************** START ******************** object_info struct ******************** START ******************** */
 
@@ -147,6 +150,7 @@ typedef struct block_info* Block_Info;
 static ListElement copy_block_info(ListElement block_info){
     assert(block_info);
     Block_Info bi = (Block_Info)(block_info);
+
     Block_Info bi_copy = malloc(sizeof(*bi_copy));
     if(bi_copy == NULL){
         return NULL;
@@ -159,8 +163,8 @@ static ListElement copy_block_info(ListElement block_info){
         return NULL;
     }
     strcpy(bi_copy->id , bi->id);
-    return bi_copy;
 
+    return bi_copy;
 }
 
 /*

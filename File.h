@@ -105,6 +105,7 @@ void file_destroy(File file){
     assert(file);
     free(file->file_id);
     listDestroy(file->blocks_list);
+    hashTableF_destroy(file->files_ht);
     free(file);
 }
 
@@ -205,6 +206,7 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     }
     strcpy(bi->id , block_id);
     bi->size = block_size;
+
     ListResult res = listInsertLast(file->blocks_list , bi);
 
     if(res != LIST_SUCCESS){

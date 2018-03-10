@@ -94,7 +94,7 @@ HashTable ht_create(char type) {
  * @key - the key for which we want to get the hashed value in the hashtable
  */
 long int ht_hash( HashTable ht, char *key ) {
-    unsigned long int hashval;
+    unsigned long int hashval = 0;
     int i = 0;
     /* Convert our string to an integer */
     while((hashval < ULONG_MAX) && (i < strlen(key))){
@@ -103,7 +103,7 @@ long int ht_hash( HashTable ht, char *key ) {
         i++;
     }
 
-    return hashval % (ht->size_table);
+    return (hashval % (ht->size_table));
 }
 
 /*
@@ -123,7 +123,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
         free(newpair);
         return NULL;
     }
-    strcpy(newpair->key , key);
+    newpair->key = strcpy(newpair->key , key);
 
     if(flag == 'B'){ // save the data object
         newpair->data = block_create(key , sn, size);
@@ -138,6 +138,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
         free(newpair);
         return NULL;
     }
+
     newpair->next = NULL;
     return newpair;
 }
@@ -248,7 +249,6 @@ void data_destroy(Data data, char flag){
         case 'B':
             block_destroy((Block)data);
             break;
-            //TODO add case of Physical file - do we really need this ?
     }
 }
 
@@ -259,11 +259,11 @@ void data_destroy(Data data, char flag){
  * @flag - flag that signifies if the object is flag ('F') or block 'B' or directory 'D'
  */
 void hashTable_destroy(HashTable ht , char flag){
-    long num_of_elements = ht->num_of_elements;
+    long size_table = ht->size_table;
     //long size_of_lists = 0;
     struct entry_t* temp_to_free;
     // Remove lists elements of each HashTable cell
-    for(int i = 0 ; i < num_of_elements ; i++){
+    for(int i = 0 ; i < size_table ; i++){
         while(ht->table[i]) {         // free each list element of cell i
             temp_to_free = ht->table[i];
             ht->table[i] = temp_to_free->next;
@@ -286,21 +286,18 @@ void hashTable_destroy(HashTable ht , char flag){
  *                         returns false if physical file already exists
  *                         returns true if no physical file exists
  */
-Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,File file_obj_p,
-                  unsigned long* physical_files_sn){
+Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
+                  File file , File file_obj_p, unsigned long* physical_files_sn){
     assert(file && file_obj_p);
-    File temp_file = NULL;
-    bool physical_file_exist = false ,  blocks_differ = false;
+    bool physical_file_exist = false , blocks_differ = false;
     Block_Info first_block = (Block_Info)listGetFirst(file->blocks_list);
     char* first_block_id = first_block->id;
     long int hash_key = ht_hash(ht_physical_files , first_block_id);
 
-    Entry current = ht_physical_files->table[hash_key]; //get the cell int the hashtable for the possible file
-//    if(current == NULL){
-//        printf("---> hashing key is : %d\nThe list is empty =[ \n" , hash_key);
-//    }
-    //go over all files in the cell found above
-    while(current != NULL && current->key != NULL){
+    /* ---------------------------------- Iterate over HT_PHYSICAL_FILES ---------------------------------- */
+    File temp_file = NULL;
+    Entry current = ht_physical_files->table[hash_key]; //get the cell in the hashtable for the possible file
+    while(current != NULL && current->key != NULL){ //go over all files in the cell found above
         temp_file = ((File)(current->data));
         if(strcmp(file->file_id , temp_file->file_id) == 0){ //It's the same file
             current = current->next;
@@ -310,15 +307,12 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
             current = current->next;
             continue;
         }
-
         if(file->num_blocks != temp_file->num_blocks){ //Compare by amount of blocks
             current = current->next;
             continue;
         }
 
-
-        //Compare each block
-        Object_Info temp_oi;
+        Object_Info temp_oi; //Compare each block
         Block_Info temp_file_blocks = listGetFirst(temp_file->blocks_list);
         LIST_FOREACH(Block_Info , iter ,file->blocks_list){
             if(strcmp(iter->id , temp_file_blocks->id) != 0){
@@ -331,8 +325,7 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
         }
         temp_oi = listGetFirst(temp_file->blocks_list);
         temp_oi = listGetFirst(file->blocks_list);
-        if(blocks_differ == true){
-            //advance to the next cell
+        if(blocks_differ == true){//advance to the next cell
             current = current->next;
             continue;
         } else { // We have found a match
@@ -340,15 +333,16 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
             break;
         }
     } /* Finished searching for a physical file*/
-
-    /*-------------------- Adding the file to hash table -----------------------------*/
+    /* ---------------------------------- Iterate over HT_PHYSICAL_FILES ---------------------------------- */
+    /* ---------------------------------------------------------------------------------------------------- */
+    /* ---------------------------------- Adding the file to hash table ----------------------------------- */
     if(physical_file_exist == true) { // physical file already exits - add file to ht_files only
         file_set_logical_flag(file);
-        ht_setF(temp_file->files_ht, file->file_id); // add logical file to the files ht of the pyhsical we found
+        ht_setF(temp_file->files_ht, file->file_id); // add logical file to the files ht of the physical we found
         (temp_file->num_files)++;
         file_set_physical_sn(file , temp_file->physical_sn); // set the physical sn of the logical file to be the one of the physical stored
         (*physical_files_sn)--;
-
+        file_destroy(file_obj_p);
     } else { //add file only to ht_physical_files and to ht_files
         // hash by first block id
         hash_key = ht_hash(ht_physical_files , first_block_id);
@@ -356,8 +350,10 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
 
         Entry newpair  = malloc(sizeof(*newpair));
         assert(newpair);
-        newpair->key = malloc(sizeof(char)*(strlen(first_block_id)+1));
+
+        newpair->key = malloc(sizeof(char)*(strlen(first_block_id) + 1));
         assert(newpair->key);
+
         newpair->key = strcpy(newpair->key , first_block_id);
         newpair->data = file_obj_p;
 
@@ -365,13 +361,14 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
         newpair->next = ent;
         ht_physical_files->table[hash_key] = newpair;
     }
+    /* -------------------- Adding the file to logical hash table anyway ----------------------------- */
 
-    /*-------------------- Adding the file to logical hash table anyway -----------------------------*/
-
-    char* key = malloc(sizeof(char)*(strlen(file->file_id)+1));
+    char* key = malloc(sizeof(char)*(strlen(file->file_id) + 1));
     strcpy(key , file->file_id);
+
     Entry newpair_l  = malloc(sizeof(*newpair_l));
     if(newpair_l == NULL){
+        free(key);
         return NULL;
     }
     newpair_l->key = malloc(sizeof(char)*(strlen(file->file_id)+1));
@@ -397,6 +394,7 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
     /* There's already a pair. Let's replace that string. */
     if( curr != NULL && curr->key != NULL && strcmp( key, curr->key ) == 0 ) {
         //Return the pointer to the Block/File that already exists in the hash
+        free(key);
         return curr->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
         /* We're at the start of the linked list in this hash_key. */
@@ -412,8 +410,10 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files , File file ,
             newpair_l->next = curr;
             last->next = newpair_l;
         }
+        free(key);
         return newpair_l->data;
     }
+    /* -------------------- Adding the file to logical hash table anyway ----------------------------- */
 }
 
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */
