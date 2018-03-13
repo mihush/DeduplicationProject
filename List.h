@@ -187,6 +187,30 @@ int listGetSize(List list);
 ListElement listGetFirst(List list);
 
 /**
+* Sets the internal iterator to the first element and retrieves it.
+*
+* The list has an internal iterator (also called current element) to allow
+* iteration over the list's elements. This function sets the iterator to point
+* to the last element in the list and return it.
+* Use this to insert element from the end of the list
+* the list and/or get the last element in the list.
+* (To continue iteration use listGetNext)
+* @code
+* void f(List list) {
+*   ListElement last = listGetLast(list);
+*   printf("The last element is at address %x\n", last);
+* }
+* @endcode
+*
+* @param list The list for which to set the iterator and return the first
+* element.
+* @return
+* NULL is a NULL pointer was sent or the list is empty.
+* The first element of the list otherwise
+*/
+ListElement listGetLast(List list);
+
+/**
 * Advances the list's iterator to the next element and return it
 *
 * @param list The list for which to advance the iterator

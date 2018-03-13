@@ -18,6 +18,7 @@ typedef struct node {
 //List structure with list functions
 struct List_t {
     Node first;
+    Node last;
     Node iterator;
     CopyListElement copyElement;
     FreeListElement freeElement;
@@ -45,6 +46,7 @@ List listCreate(CopyListElement copyElement, FreeListElement freeElement) {
     newList->copyElement = copyElement;
     newList->freeElement = freeElement;
     newList->first = NULL;
+    newList->last = NULL;
     newList->iterator = NULL;
     return newList;
 }
@@ -117,6 +119,18 @@ ListElement listGetFirst(List list) {
     return list->first->data;
 }
 
+ListElement listGetLast(List list) {
+    //Check for invalid arguments
+    if (!list) {
+        return NULL;
+    }
+    list->iterator = list->last;
+    if (!list->iterator || !list->iterator->data) {
+        return NULL;
+    }
+    return list->last->data;
+}
+
 ListElement listGetNext(List list) {
     //Check for invalid arguments
     if (!list || !list->iterator) {
@@ -151,6 +165,11 @@ ListResult listInsertFirst(List list, ListElement element) {
     newNode->next = list->first;
     //and set the first node in the list as the new node
     list->first = newNode;
+    //if we insert the first element
+    //update also the last to point on this element
+    if(!list->last){
+        list->last = list->first;
+    }
     return LIST_SUCCESS;
 }
 
@@ -159,21 +178,28 @@ ListResult listInsertLast(List list, ListElement element) {
     if (!list || !element) {
         return LIST_NULL_ARGUMENT;
     }
-    //if first node is null the list is empty so enter new node as first
-    Node iterator = list->first;
-
-    if (!iterator) {
-        return listInsertFirst(list, element);
-    }
-    //move to the next until the next node is null
-    while (iterator->next) {
-        iterator = iterator->next;
-    }
-    //set the next node, which is null, to be the new node
-    iterator->next = nodeCreate(element, list->copyElement);
-    if (!iterator->next) {
+    //create a new node for insertion in the end
+    Node newNode = nodeCreate(element, list->copyElement);
+    if (!newNode) {
         return LIST_OUT_OF_MEMORY;
     }
+    //if we insert the first element
+    if(!list->first && !list->last){
+        //set next node of new node to the first node of list
+        newNode->next = NULL;
+        //and set the first node in the list as the new node
+        list->last = newNode;
+        list->first = list->last;
+    } else { //one or more elements
+        if(!list->last){ //sanity check we don't try to go to NULL arg
+            return LIST_NULL_ARGUMENT;
+        }
+        newNode->next = NULL;
+        list->last->next = newNode;
+        list->last = newNode;
+    }
+    //if we want to update the list iterator TODO - check if hurt the list-foreach in implementation
+    list->iterator = list->last; //TODO - might not needed this - so can be in remark
     return LIST_SUCCESS;
 }
 
@@ -185,8 +211,9 @@ ListResult listClear(List list) {
     }
     //destroy all nodes
     destroyNodes(list->first,list->freeElement);
-    list->first=NULL;
-    list->iterator=NULL;
+    list->first = NULL;
+    list->last = NULL;
+    list->iterator = NULL;
     return LIST_SUCCESS;
 }
 /*------------- End - Structure Functions -------------*/
