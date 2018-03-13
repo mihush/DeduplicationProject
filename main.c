@@ -3,8 +3,6 @@
 #include "HashTable.h"
 
 /* ************************************************ Global Params *************************************************** */
-#define NUM_INPUT_FILES 2
-
 /* Serial number for counting the elements which insert to the system */
 // files_sn is the logical sn-number
 unsigned long blocks_sn = 0 , files_sn = 0 , dir_sn = 0, physical_files_sn = 0;
@@ -29,46 +27,46 @@ bool check_12_z(char buff[STR_OF_Z]){
 }
 
 /**/
-char** get_input_file_names(int* num_of_input_files ,
-                          char** current_working_directory , char* dedup_type){
-    char line[MAX_LINE_LEN];
-    FILE* input_params_file = fopen("input_params.txt","r");
-    if(input_params_file == NULL){ //check the file was opened successfully - if not terminate
-        printf("(Parser)--> Can't open input_params file/s =[ \n");
-        return NULL;
-    }
-
-    //Read First Line - Deduplication Type
-    fgets(line , MAX_LINE_LEN , input_params_file);
-    *dedup_type = line[0];
-    printf("---> %c\n" , *dedup_type);
-
-    //Read Second line - Input Files Directory
-    fgets(line , MAX_LINE_LEN , input_params_file);
-    *current_working_directory = calloc(strlen(line) + 1 , sizeof(char));
-    strcpy(*current_working_directory , line);
-    int last_char_idx = strlen(*current_working_directory) - 1;
-    (*current_working_directory)[last_char_idx] = '\0';
-    printf("---> %s",*current_working_directory);
-
-    //Read Third Line - Number of input files
-    fgets(line , MAX_LINE_LEN , input_params_file);
-    *num_of_input_files = atoi(line);
-    printf("---> %d\n" , *num_of_input_files);
-
-    //Read the rest of the line to get all file names
-    char** files_to_read = (char**)malloc((*num_of_input_files) * sizeof(char*));
-    for(int i = 0 ; i < *num_of_input_files ; i++){
-        fgets(line , MAX_LINE_LEN , input_params_file);
-        files_to_read[i] = (char*)malloc((strlen(line) + 1) * sizeof(char));
-        strcpy(files_to_read[i] , line);
-        files_to_read[i][strlen(files_to_read[i])-1] = '\0';
-        printf("-----> %s\n",files_to_read[i]);
-    }
-
-    fclose(input_params_file);
-    return files_to_read;
-}
+//char** get_input_file_names(int* num_of_input_files ,
+//                          char** current_working_directory , char* dedup_type){
+//    char line[MAX_LINE_LEN];
+//    FILE* input_params_file = fopen("input_params.txt","r");
+//    if(input_params_file == NULL){ //check the file was opened successfully - if not terminate
+//        printf("(Parser)--> Can't open input_params file/s =[ \n");
+//        return NULL;
+//    }
+//
+//    //Read First Line - Deduplication Type
+//    fgets(line , MAX_LINE_LEN , input_params_file);
+//    *dedup_type = line[0];
+//    printf("---> %c\n" , *dedup_type);
+//
+//    //Read Second line - Input Files Directory
+//    fgets(line , MAX_LINE_LEN , input_params_file);
+//    *current_working_directory = calloc(strlen(line) + 1 , sizeof(char));
+//    strcpy(*current_working_directory , line);
+//    int last_char_idx = strlen(*current_working_directory) - 1;
+//    (*current_working_directory)[last_char_idx] = '\0';
+//    printf("---> %s",*current_working_directory);
+//
+//    //Read Third Line - Number of input files
+//    fgets(line , MAX_LINE_LEN , input_params_file);
+//    *num_of_input_files = atoi(line);
+//    printf("---> %d\n" , *num_of_input_files);
+//
+//    //Read the rest of the line to get all file names
+//    char** files_to_read = (char**)malloc((*num_of_input_files) * sizeof(char*));
+//    for(int i = 0 ; i < *num_of_input_files ; i++){
+//        fgets(line , MAX_LINE_LEN , input_params_file);
+//        files_to_read[i] = (char*)malloc((strlen(line) + 1) * sizeof(char));
+//        strcpy(files_to_read[i] , line);
+//        files_to_read[i][strlen(files_to_read[i])-1] = '\0';
+//        printf("-----> %s\n",files_to_read[i]);
+//    }
+//
+//    fclose(input_params_file);
+//    return files_to_read;
+//}
 
 /* *********************************************** Parsing Functions ************************************************ */
 /* DIRECTORY NAME */
@@ -124,11 +122,7 @@ char* case_7_hash_file_id(char buff[BUFFER_SIZE], int ind_num_of_file, char* fil
     strcpy(file_id , file_system_id);
     strcat(file_id , buff);
     int id_len = strlen(file_id);
-    file_id[id_len] = '\0';
-//    file_id[0] = (LETTERS_CHAR + ind_num_of_file);
-//    file_id[1] = '_';
-//    strncpy((file_id + 2) , buff , strlen(buff) - 1);
-//    file_id[strlen(buff) + 2] = '\0';
+    file_id[id_len - 1] = '\0';
     return file_id;
 }
 
@@ -381,7 +375,6 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
                 fprintf(results_file , "B,%lu,%s,%d,",
                         temp_block->block_sn , temp_block->block_id,
                         temp_block->shared_by_num_files);
-                printf("%s\n", temp_block->block_id);
                 for(int j = 0 ; j < (temp_block->files_ht->size_table) ; j++){
                     EntryF pair_file_id = temp_block->files_ht->table[j];
                     while( pair_file_id != NULL && pair_file_id->key != NULL) {
@@ -460,16 +453,48 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
 }
 
 /* ****************************************************** MAIN ******************************************************** */
-int main(){
+int main(int argc , char** argv){
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
-    /// File  Manipulation Variables
+    /* Define Files to be read */
+    int num_input_files = 0;
+    char* current_working_directory = NULL;
+    char** files_to_read = NULL;
+    if(argc==1){
+        printf("No Extra Command Line Argument Passed Other Than Program Name\n");
+        return 0;
+    }
+
+    dedup_type = argv[1][0];
+    printf("%c\n" , dedup_type);
+
+    num_input_files = atoi(argv[2]);
+    printf("%d\n" , num_input_files);
+
+    current_working_directory = calloc((strlen(argv[3]) + 1) , sizeof(char));
+    strcpy(current_working_directory , argv[3]);
+    printf("%s\n" , current_working_directory);
+
+    //Read the rest of the line to get all file names
+    files_to_read = malloc(num_input_files * sizeof(char*));
+    for(int i = 0 ; i < num_input_files ; i++){
+        files_to_read[i] = (char*)malloc((strlen(argv[4 + i]) + 1) * sizeof(char));
+        strcpy(files_to_read[i] , argv[4 + i]);
+        printf("-----> %s\n",files_to_read[i]);
+    }
+
+    printf("\n\n\n");
+    roots = malloc(num_input_files* sizeof(*roots));
+
+    /* File  Manipulation Variables */
     FILE *input_file = NULL;
     char buff[BUFFER_SIZE];
     bool read_empty_line_chucnks = false;
     bool finished_process_blocks = false;
     int block_line_count = 0;
+    char* current_file = NULL;
+    bool finished_reading_file = false;
 
-    /// Initialize Global Variables
+    /* Initialize Global Variables */
     ht_files = ht_create('F');
     ht_physical_files = ht_create('F');
     ht_blocks = ht_create('B');
@@ -481,27 +506,13 @@ int main(){
         return 0;
     }
 
-    /// Define parameters for global data Manipulation (over entire input file)
+    /* Define parameters for global data Manipulation (over entire input file) */
     List curr_depth_objects = NULL , previous_depth_objects = NULL;
     int global_current_depth = 0 ;
     curr_depth_objects = listCreate(object_info_copy , object_info_destroy);
     previous_depth_objects = listCreate(object_info_copy , object_info_destroy);
 
-    /// Define Files to be read
-//    char* files_to_read[NUM_INPUT_FILES];
-//    //char* current_working_directory  = "/home/polinam/27_01_18/";
-//    char* current_working_directory = "C:\\Polina\\Technion\\Semester7\\Dedup Project\\Project_Files\\DeduplicationProject\\";
-//    //char* current_working_directory = "C:\\Users\\mihush\\Documents\\Technion\\DeduplicationProject_1\\";
-//    files_to_read[0] = "0119";
-//    //files_to_read[1] = "0119";
-    int num_input_files = 0;
-    char* current_working_directory = NULL;
-    char** files_to_read = NULL;
-    files_to_read = get_input_file_names(&num_input_files, &current_working_directory, &dedup_type);
-    roots = malloc(num_input_files* sizeof(*roots));
 
-    char* current_file = NULL;
-    bool finished_reading_file = false;
 
     /// Define parameters for reading data regarding SINGLE OBJECT
     char file_system_ID[FILE_SYSTEM_ID_LEN+2];
@@ -535,7 +546,7 @@ int main(){
         fgets(buff, BUFFER_SIZE , input_file); //Read First Line
         fgets(buff, BUFFER_SIZE , input_file); //Read Second Line
         fgets(buff, BUFFER_SIZE , input_file); //READFile System ID - get last 3 digits
-        printf("%s\n" , buff);
+        //printf("%s\n" , buff);
         strncpy(file_system_ID , buff + 9 , 3);
         file_system_ID[FILE_SYSTEM_ID_LEN]='_';
         file_system_ID[FILE_SYSTEM_ID_LEN + 1]='\0';
@@ -550,6 +561,7 @@ int main(){
         /* Read File till the end - parse each block and add it to the corresponding structure */
         while(!feof(input_file)){
             fgets(buff, BUFFER_SIZE , input_file);
+            //printf("%s\n" , buff);
             block_line_count++;
             /* Check if we have reached the end of the file, nothing more to read */
             if(strcmp(buff , "LOGCOMPLETE\n") == 0){

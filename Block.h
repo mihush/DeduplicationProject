@@ -41,62 +41,28 @@ typedef struct block_t *Block;
  * @block_sn   - serial number of the block
  * @block_size - the size of the block
  */
-Block block_create(char* block_id , unsigned long block_sn , unsigned int block_size){
-    Block block = malloc(sizeof(*block)); //create a block
-    if(block == NULL){ //Check memory allocation was successful
-        return NULL;
-    }
-
-    block->block_id = calloc((BLOCK_ID_LEN + 1) , sizeof(char)); //allocate string for block_id
-    if(block->block_id == NULL){ //check successful allocation
-        free(block);
-        return NULL;
-    }
-    block->block_id = strcpy(block->block_id , block_id);
-    block->block_sn = block_sn;
-    block->shared_by_num_files = 0;
-    block->block_size = block_size;
-
-    block->files_ht = ht_createF('N');
-    if(block->files_ht == NULL){
-        free(block->block_id);
-        free(block);
-        return NULL;
-    }
-    return block;
-}
+Block block_create(char* block_id , unsigned long block_sn , unsigned int block_size);
 
 /*
  *  block_destroy - Destroys and frees space of a block structure
  *
  *  @block - pointer to the block structure to be destroyed
  */
-void block_destroy(Block block){
-    assert(block);
-    free(block->block_id);
-    hashTableF_destroy(block->files_ht);
-    free(block);
-}
+void block_destroy(Block block);
 
 /*
  *  block_get_SN - returns the SN of the block
  *
  *  @block - pointer to the block structure
  */
-long block_get_SN(Block block){
-    assert(block);
-    return block->block_sn;
-}
+long block_get_SN(Block block);
 
 /*
  *  block_get_ID - Returns the hashed id of the block
  *
  *  @block - pointer to the block structure
  */
-char* block_get_ID(Block block){
-    assert(block);
-    return block->block_id;
-}
+char* block_get_ID(Block block);
 
 /*
  *  block_add_file - adds the file containing the block to the files list saved in the block
@@ -104,19 +70,7 @@ char* block_get_ID(Block block){
  *  @block   - pointer to the block structure to which we want to add the file
  *  @file_id - the id of the file that contains the block
  */
-ErrorCode block_add_file(Block block , char* file_id){
-    if(file_id == NULL || block == NULL){ //Check input is valid
-        return INVALID_INPUT;
-    }
-
-    EntryF result = ht_setF(block->files_ht, file_id);
-    if(result == NULL){ //Check for memory allocation
-        return OUT_OF_MEMORY;
-    }
-
-    (block->shared_by_num_files)++;
-    return SUCCESS;
-}
+ErrorCode block_add_file(Block block , char* file_id);
 
 
 /* ******************** END ******************** Block STRUCT Functions ******************** END ******************** */

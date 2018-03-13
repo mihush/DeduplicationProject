@@ -6,6 +6,7 @@
 #define DEDUPLICATION_PROJECT_FILE_H
 
 #include "Utilities.h"
+#include "HashTableF.h"
 
 /* ****************************************************************************************************************** */
 /* ****************************************************************************************************************** */
@@ -55,110 +56,48 @@ typedef struct file_t *File;
  * @physical_sn - in case of file level deduplication, there are 2 types of files - physical and logical
  */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
-                 unsigned long physical_sn){
-    File file = malloc(sizeof(*file));
-    if(file == NULL){
-        return NULL;
-    }
-
-    file->file_id = malloc(sizeof(char)* (FILE_ID_LEN + 1));
-    if(file->file_id == NULL){
-        free(file);
-        return NULL;
-    }
-
-    file->file_id = strcpy(file->file_id , file_id);
-    file->file_sn = file_sn;
-    file->dir_sn = 0; //not known in the time of creation
-    file->num_blocks = 0;
-    file->file_depth = depth;
-    file->file_size = size;
-    file->num_files = 1;
-    file->flag = 'P';
-    file->physical_sn = physical_sn; // will be updated from file_compare
-
-    file->blocks_list = listCreate(copy_block_info , free_block_info);
-    if(file->blocks_list == NULL){
-        free(file->file_id);
-        free(file);
-        return NULL;
-    }
-
-    file->files_ht = ht_createF('N');
-    if(file->files_ht == NULL){
-        free(file->file_id);
-        listDestroy(file->blocks_list);
-        free(file);
-        return NULL;
-    }
-
-    ht_setF(file->files_ht, file_id);
-    return file;
-}
+                 unsigned long physical_sn);
 
 /*
  *  file_destroy - Destroys and frees space of a file structure
  *
  *  @file - Pointer to the file object to be destroyed
  */
-void file_destroy(File file){
-    assert(file);
-    free(file->file_id);
-    listDestroy(file->blocks_list);
-    hashTableF_destroy(file->files_ht);
-    free(file);
-}
+void file_destroy(File file);
 
 /*
  *  file_get_SN - Returns the SN of the file
  *
  *  @file - Pointer to the file object
  */
-unsigned long file_get_SN(File file){
-    assert(file);
-    return file->file_sn;
-}
+unsigned long file_get_SN(File file);
 
 /*
  * file_get_ID - Returns pointer to the hashed ID of the file
  *
  * @file - Pointer to the file object
  */
-char* file_get_ID(File file){
-    assert(file);
-    return file->file_id;
-}
+char* file_get_ID(File file);
 
 /*
  *  file_get_depth - Returns the depth of the file in the hierarchy
  *
  *  @file - Pointer to the file object
  */
-unsigned int file_get_depth(File file){
-    assert(file);
-    return file->file_depth;
-}
+unsigned int file_get_depth(File file);
+/*
+ *  file_get_num_blocks - returns the number of blocks the file contains
+ *
+ *  @file - Pointer to the file object
+ */
+int file_get_num_blocks(File file);
 
 /*
  *  file_get_num_blocks - returns the number of blocks the file contains
  *
  *  @file - Pointer to the file object
  */
-int file_get_num_blocks(File file){
-    assert(file);
-    return file->num_blocks;
-}
-
-/*
- *  file_get_num_blocks - returns the number of blocks the file contains
- *
- *  @file - Pointer to the file object
- */
-ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
-    assert(file);
-    file->dir_sn = dir_sn;
-    return SUCCESS;
-}
+ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn);
 
 /*
  *  file_set_physical_sn - Set the value of the physical serial number of the file object
@@ -166,21 +105,14 @@ ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
  *  @file             - Pointer to the file object
  *  @physical_file_sn - value of the serial number to be set
  */
-ErrorCode file_set_physical_sn(File file , unsigned long physical_file_sn){
-    assert(file);
-    file->physical_sn = physical_file_sn;
-    return SUCCESS;
-}
+ErrorCode file_set_physical_sn(File file , unsigned long physical_file_sn);
 
 /*
  *  file_set_logical_flag - Set the File object to be a logical file
  *
  *  @file - Pointer to the file object
  */
-ErrorCode file_set_logical_flag(File file){
-    file->flag = 'L';
-    return SUCCESS;
-}
+ErrorCode file_set_logical_flag(File file);
 
 
 /*
@@ -190,36 +122,7 @@ ErrorCode file_set_logical_flag(File file){
  *  @block_id   - hashed id of the block
  *  @block_size - size of the block
  */
-ErrorCode file_add_block(File file , char* block_id , int block_size){
-    if(file == NULL || block_id == NULL || block_size < 0){
-        return INVALID_INPUT;
-    }
-
-    Block_Info bi = malloc(sizeof(*bi));
-    if(bi == NULL){
-        return OUT_OF_MEMORY;
-    }
-    bi->id =  calloc((strlen(block_id) +1) , sizeof(char));
-    if(bi->id == NULL){
-        free(bi);
-        return OUT_OF_MEMORY;
-    }
-    strcpy(bi->id , block_id);
-    bi->size = block_size;
-
-    ListResult res = listInsertLast(file->blocks_list , bi);
-
-    if(res != LIST_SUCCESS){
-        free(bi->id);
-        free(bi);
-        return OUT_OF_MEMORY;
-    }
-
-    (file->num_blocks)++;
-    free(bi->id);
-    free(bi);
-    return SUCCESS;
-}
+ErrorCode file_add_block(File file , char* block_id , int block_size);
 
 /* ******************** END ******************** File STRUCT Functions ******************** END ********************* */
 #endif //DEDUPLICATION_PROJECT_FILE_H
