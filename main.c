@@ -26,48 +26,6 @@ bool check_12_z(char buff[STR_OF_Z]){
     return true;
 }
 
-/**/
-//char** get_input_file_names(int* num_of_input_files ,
-//                          char** current_working_directory , char* dedup_type){
-//    char line[MAX_LINE_LEN];
-//    FILE* input_params_file = fopen("input_params.txt","r");
-//    if(input_params_file == NULL){ //check the file was opened successfully - if not terminate
-//        printf("(Parser)--> Can't open input_params file/s =[ \n");
-//        return NULL;
-//    }
-//
-//    //Read First Line - Deduplication Type
-//    fgets(line , MAX_LINE_LEN , input_params_file);
-//    *dedup_type = line[0];
-//    printf("---> %c\n" , *dedup_type);
-//
-//    //Read Second line - Input Files Directory
-//    fgets(line , MAX_LINE_LEN , input_params_file);
-//    *current_working_directory = calloc(strlen(line) + 1 , sizeof(char));
-//    strcpy(*current_working_directory , line);
-//    int last_char_idx = strlen(*current_working_directory) - 1;
-//    (*current_working_directory)[last_char_idx] = '\0';
-//    printf("---> %s",*current_working_directory);
-//
-//    //Read Third Line - Number of input files
-//    fgets(line , MAX_LINE_LEN , input_params_file);
-//    *num_of_input_files = atoi(line);
-//    printf("---> %d\n" , *num_of_input_files);
-//
-//    //Read the rest of the line to get all file names
-//    char** files_to_read = (char**)malloc((*num_of_input_files) * sizeof(char*));
-//    for(int i = 0 ; i < *num_of_input_files ; i++){
-//        fgets(line , MAX_LINE_LEN , input_params_file);
-//        files_to_read[i] = (char*)malloc((strlen(line) + 1) * sizeof(char));
-//        strcpy(files_to_read[i] , line);
-//        files_to_read[i][strlen(files_to_read[i])-1] = '\0';
-//        printf("-----> %s\n",files_to_read[i]);
-//    }
-//
-//    fclose(input_params_file);
-//    return files_to_read;
-//}
-
 /* *********************************************** Parsing Functions ************************************************ */
 /* DIRECTORY NAME */
 char* case_1_directory_name(char buff[BUFFER_SIZE]){
@@ -481,8 +439,6 @@ int main(int argc , char** argv){
         strcpy(files_to_read[i] , argv[4 + i]);
         printf("-----> %s\n",files_to_read[i]);
     }
-
-    printf("\n\n\n");
     roots = malloc(num_input_files* sizeof(*roots));
 
     /* File  Manipulation Variables */
@@ -544,6 +500,13 @@ int main(int argc , char** argv){
         free(current_file);
         printf("(Parser)-->  ----- Start Reading the file ----- \n");
         fgets(buff, BUFFER_SIZE , input_file); //Read First Line
+        if(strlen(buff) >= 2){
+            int len_buff = strcspn(buff , "\r\n");
+            buff[len_buff] = '\n';
+            printf("%d\n",len_buff);
+        }
+        printf("%s\n" , buff);
+
         fgets(buff, BUFFER_SIZE , input_file); //Read Second Line
         fgets(buff, BUFFER_SIZE , input_file); //READFile System ID - get last 3 digits
         //printf("%s\n" , buff);
