@@ -6,7 +6,7 @@
 #include "File.h"
 /* ******************* START ******************* File STRUCT Functions ******************* START ******************** */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
-                 unsigned long physical_sn){
+                 unsigned long physical_sn , char dedup_type){
     File file = malloc(sizeof(*file));
     if(file == NULL){
         return NULL;
@@ -35,23 +35,35 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
         return NULL;
     }
 
-    file->files_ht = ht_createF('N');
-    if(file->files_ht == NULL){
-        free(file->file_id);
-        listDestroy(file->blocks_list);
-        free(file);
-        return NULL;
+    if(dedup_type == 'F'){
+//        file->files_ht = ht_createF('N');
+//        if(file->files_ht == NULL){
+//            free(file->file_id);
+//            listDestroy(file->blocks_list);
+//            free(file);
+//            return NULL;
+//        }
+//        ht_setF(file->files_ht, file_id);
+        file->logical_files_list = listCreate(copy_sn , free_sn);
+        if(file->blocks_list == NULL){
+            free(file->file_id);
+            free(file);
+            return NULL;
+        }
+        listInsertLast(file->logical_files_list , &(file->file_sn));
     }
 
-    ht_setF(file->files_ht, file_id);
     return file;
 }
 
-void file_destroy(File file){
+void file_destroy(File file , char dedup_type){
     assert(file);
     free(file->file_id);
     listDestroy(file->blocks_list);
-    hashTableF_destroy(file->files_ht);
+    if(dedup_type == 'F'){
+        //hashTableF_destroy(file->files_ht);
+        listDestroy(file->logical_files_list);
+    }
     free(file);
 }
 

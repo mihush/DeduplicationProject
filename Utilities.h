@@ -33,6 +33,40 @@ typedef enum{
 #define ROOT_ID_LEN 10
 #define FILE_SYSTEM_ID_LEN 3
 
+
+/*
+ * copy_directory_info - returns pointer to a copy of the serial number of the directory received as input
+ *
+ * @directory_info - pointer to the serial number of the directory to be copied
+ */
+static ListElement copy_sn(ListElement element){
+    assert(element);
+    unsigned long* sn = (unsigned long*)(element);
+    unsigned long* sn_copy = malloc(sizeof(*sn_copy));
+    if(sn_copy == NULL){
+        return NULL;
+    }
+    *sn_copy = *sn;
+    return sn_copy;
+}
+
+/*
+ * free_dir_info - frees the allocated space to the serial number of a directory
+ *
+ * @directory_info - pointer to the serial number that should be freed
+ */
+static  void free_sn(ListElement element){
+    free(element);
+}
+
+
+
+
+
+
+
+
+
 /* ******************** START ******************** object_info struct ******************** START ******************** */
 
 /*

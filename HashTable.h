@@ -66,7 +66,7 @@ long int ht_hash( HashTable ht, char *key );
  *               - For File - size parameter will be -1
  */
 Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag ,
-                 unsigned long physical_sn);
+                 unsigned long physical_sn , char dedup_type);
 
 /*
  * ht_set - Insert a key-value pair into a hash table (General function thus
@@ -97,7 +97,7 @@ Data ht_get( HashTable ht, char *key );
  * @data - pointer to the data object to be destroyed
  * @flag - flag that signifies if the object is flag ('F') or block 'B' or directory 'D'
  */
-void data_destroy(Data data, char flag);
+void data_destroy(Data data, char flag , char dedup_type);
 
 /*
  * hashTable_destroy - Freeing all allocations of HashTable
@@ -105,7 +105,7 @@ void data_destroy(Data data, char flag);
  * @ht - hashtable to destroy
  * @flag - flag that signifies if the object is flag ('F') or block 'B' or directory 'D'
  */
-void hashTable_destroy(HashTable ht , char flag);
+void hashTable_destroy(HashTable ht , char flag ,  char dedup_type);
 
 /*
  * file_compare_to_File - files are considered identical if have the same blocks
@@ -116,7 +116,8 @@ void hashTable_destroy(HashTable ht , char flag);
  *                         returns true if no physical file exists
  */
 Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
-                  File file , File file_obj_p, unsigned long* physical_files_sn);
+                  File file , File file_obj_p, unsigned long* physical_files_sn,
+                  char dedup_type);
 
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */
 

@@ -59,7 +59,7 @@ long int ht_hash( HashTable ht, char *key ) {
 }
 
 Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag ,
-                 unsigned long physical_sn){
+                 unsigned long physical_sn , char dedup_type){
     Entry newpair  = malloc(sizeof(*newpair));
     if(newpair == NULL){
         return NULL;
@@ -77,7 +77,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     }else if( flag == 'D'){
         newpair->data = dir_create(key , depth , sn);
     } else if(flag == 'F'){ //This is a file object
-        newpair->data = file_create(key , depth , sn , size , physical_sn);
+        newpair->data = file_create(key , depth , sn , size , physical_sn , dedup_type);
     }
 
     if(newpair->data == NULL) {
@@ -100,7 +100,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
     next = ht->table[hash_key];
 
     if(dedup_type == 'B' && flag == 'F'){// We are using Block Level Deduplication and we are working on File object
-        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn);
+        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn, dedup_type);
         newpair->next = next;
         ht->table[hash_key] = newpair;
         return newpair->data;
@@ -121,7 +121,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
         *object_exists = true;
         return next->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
-        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn); //allocate new pair
+        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn , dedup_type); //allocate new pair
         if(newpair == NULL){
             return NULL;
         }
@@ -161,10 +161,10 @@ Data ht_get(HashTable ht, char *key ) {
     return pair->data;
 }
 
-void data_destroy(Data data, char flag){
+void data_destroy(Data data, char flag , char dedup_type){
     switch (flag){
         case 'F':
-            file_destroy((File)data);
+            file_destroy((File)data , dedup_type);
             break;
         case 'D':
             dir_destroy((Dir)data);
@@ -175,7 +175,7 @@ void data_destroy(Data data, char flag){
     }
 }
 
-void hashTable_destroy(HashTable ht , char flag){
+void hashTable_destroy(HashTable ht , char flag , char dedup_type){
     long size_table = ht->size_table;
     //long size_of_lists = 0;
     struct entry_t* temp_to_free;
@@ -185,7 +185,7 @@ void hashTable_destroy(HashTable ht , char flag){
             temp_to_free = ht->table[i];
             ht->table[i] = temp_to_free->next;
             // Destroy elements fields
-            data_destroy(temp_to_free->data , flag);
+            data_destroy(temp_to_free->data , flag , dedup_type);
             free(temp_to_free->key);
             free(temp_to_free);
         }
@@ -196,7 +196,7 @@ void hashTable_destroy(HashTable ht , char flag){
 }
 
 Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
-                  File file , File file_obj_p, unsigned long* physical_files_sn){
+                  File file , File file_obj_p, unsigned long* physical_files_sn,char dedup_type){
     assert(file && file_obj_p);
     bool physical_file_exist = false , blocks_differ = false;
     Block_Info first_block = (Block_Info)listGetFirst(file->blocks_list);
@@ -247,11 +247,14 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
     /* ---------------------------------- Adding the file to hash table ----------------------------------- */
     if(physical_file_exist == true) { // physical file already exits - add file to ht_files only
         file_set_logical_flag(file);
-        ht_setF(temp_file->files_ht, file->file_id); // add logical file to the files ht of the physical we found
+
+        //ht_setF(temp_file->files_ht, file->file_id); // add logical file to the files ht of the physical we found
+        listInsertLast(temp_file->logical_files_list , &(file->file_sn));
+
         (temp_file->num_files)++;
         file_set_physical_sn(file , temp_file->physical_sn); // set the physical sn of the logical file to be the one of the physical stored
         (*physical_files_sn)--;
-        file_destroy(file_obj_p);
+        file_destroy(file_obj_p , dedup_type);
     } else { //add file only to ht_physical_files and to ht_files
         // hash by first block id
         hash_key = ht_hash(ht_physical_files , first_block_id);
