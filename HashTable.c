@@ -271,7 +271,6 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
         ht_physical_files->table[hash_key] = newpair;
     }
     /* -------------------- Adding the file to logical hash table anyway ----------------------------- */
-
     long int hash_key_f = ht_hash( ht_files , file->file_id );
     Entry curr = ht_files->table[hash_key_f];
 
@@ -286,8 +285,8 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
     newpair_l->data = file;
     newpair_l->next = curr;
     ht_files->table[hash_key_f] = newpair_l;
-
     /* -------------------- Adding the file to logical hash table anyway ----------------------------- */
+    return newpair_l->data;
 }
 
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */

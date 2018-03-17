@@ -1,7 +1,7 @@
 /* *************************************************** INCLUDES ***************************************************** */
 #include "Utilities.h"
 #include "HashTable.h"
-
+#include "TextParsing.h"
 /* ************************************************ Global Params *************************************************** */
 /* Serial number for counting the elements which insert to the system */
 // files_sn is the logical sn-number
@@ -115,6 +115,7 @@ void case_13_VS(FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_coun
         }
         if((*read_empty_line_chucnks != true)&&(read_block != true)){
             fgets(buff, BUFFER_SIZE, input_file);
+            clear_line(buff);
             (*block_line_count)++;
         }
     }
@@ -164,6 +165,7 @@ void case_13_VS(FILE *input_file , char buff[BUFFER_SIZE] , int* block_line_coun
                 blocks_sn++;
             }
             fgets(buff, BUFFER_SIZE, input_file);
+            clear_line(buff);
             (*block_line_count)++;
             object_exists = false;
         } while (strlen(buff) > 1);
@@ -500,16 +502,11 @@ int main(int argc , char** argv){
         free(current_file);
         printf("(Parser)-->  ----- Start Reading the file ----- \n");
         fgets(buff, BUFFER_SIZE , input_file); //Read First Line
-        if(strlen(buff) >= 2){
-            int len_buff = strcspn(buff , "\r\n");
-            buff[len_buff] = '\n';
-            printf("%d\n",len_buff);
-        }
-        printf("%s\n" , buff);
-
+        clear_line(buff);
         fgets(buff, BUFFER_SIZE , input_file); //Read Second Line
+        clear_line(buff);
         fgets(buff, BUFFER_SIZE , input_file); //READFile System ID - get last 3 digits
-        //printf("%s\n" , buff);
+        clear_line(buff);
         strncpy(file_system_ID , buff + 9 , 3);
         file_system_ID[FILE_SYSTEM_ID_LEN]='_';
         file_system_ID[FILE_SYSTEM_ID_LEN + 1]='\0';
@@ -517,6 +514,7 @@ int main(int argc , char** argv){
         /* Skip till the first empty line - over the file system description */
         do{
             fgets(buff, BUFFER_SIZE , input_file);
+            clear_line(buff);
         } while(strlen(buff) > 1);
         set_root = true;
         printf("(Parser)--> --- Skipped over the file-system data block successfully--- \n");
@@ -524,13 +522,16 @@ int main(int argc , char** argv){
         /* Read File till the end - parse each block and add it to the corresponding structure */
         while(!feof(input_file)){
             fgets(buff, BUFFER_SIZE , input_file);
+            clear_line(buff);
             //printf("%s\n" , buff);
             block_line_count++;
             /* Check if we have reached the end of the file, nothing more to read */
-            if(strcmp(buff , "LOGCOMPLETE\n") == 0){
+            if(strncmp(buff , "LOGCOMPLETE" , 11) == 0){
                 /* Read the last line before EOF */
                 fgets(buff, BUFFER_SIZE , input_file);
+                clear_line(buff);
                 finished_reading_file = true;
+                printf("Finished READING THE FILE .....................\n");
             }
             /* We haven't seen the LOGCOMPLETE line yet */
             /* Check if we haven't reached the end of the current input block */
@@ -608,6 +609,7 @@ int main(int argc , char** argv){
 
                 if(read_empty_line_chucnks == false && finished_process_blocks == false){
                     fgets(buff, BUFFER_SIZE , input_file); //read next line in current block
+                    clear_line(buff);
                     block_line_count++;
                 }
             } /* Processing Object */

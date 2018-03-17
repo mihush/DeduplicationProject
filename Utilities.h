@@ -24,18 +24,13 @@ typedef enum{
 #define DIR_NAME_HASH 10
 #define BLOCK_ID_LEN 13
 #define FILE_ID_LEN 25
-#define BUFFER_SIZE 255
-#define LETTERS_CHAR 48
+#define BUFFER_SIZE 1024
 #define LINE_SPACE 10
 #define CHUNKE_ID_LEN 10
 #define CHUNKE_SIZE_LEN 6
 #define DIR_SIZE 0
 #define FILE_ATTRIBUTE_DIRECTORY 0x00000010
 #define ROOT_ID_LEN 10
-#define FILE_NAME_LEN 5
-#define NUM_OF_INPUT_FILE 208
-#define MAX_LINE_LEN 1500
-#define FILE_SYSTEM_ID_LINE_LEN 12
 #define FILE_SYSTEM_ID_LEN 3
 
 /* ******************** START ******************** object_info struct ******************** START ******************** */
