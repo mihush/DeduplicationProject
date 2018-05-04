@@ -3,5 +3,5 @@ project(DeduplicationProject)
 
 set(CMAKE_C_STANDARD 99)
 
-set(SOURCE_FILES main.c List.c Block.c Directory.c File.c HashTable.c HashTableF.c Utilities.c TextParsing.c TextParsing.h)
+set(SOURCE_FILES main.c List.c Block.c Directory.c File.c HashTable.c HashTableF.c Utilities.c TextParsing.c TextParsing.h memory_pool.h memory_pool.c)
 add_executable(DeduplicationProject ${SOURCE_FILES})
