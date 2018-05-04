@@ -18,9 +18,9 @@
 /* ****************************************************************************************************************** */
 /* **************************************************** DEFINES ***************************************************** */
 #define INIT_SIZE 5007
-#define BLOCKS_INIT_SIZE 1000000
-#define FILES_INIT_SIZE 500000
-#define DIRS_INIT_SIZE 100000
+#define BLOCKS_INIT_SIZE 2000000
+#define FILES_INIT_SIZE 2000000
+#define DIRS_INIT_SIZE 1000000
 typedef void* Data;
 /* **************************************************** DEFINES ***************************************************** */
 /* ****************************************************************************************************************** */
@@ -44,7 +44,7 @@ typedef struct hashtable_t *HashTable;
 /* ****************************************************************************************************************** */
 /* ****************************************************************************************************************** */
 /* ******************** START ******************** HashTable Functions ******************** START ******************* */
-/* Create a new HashTable */
+
 /*
  * ht_create - creates a hashtable for the requested type of objects (which determines its size)
  *
@@ -58,7 +58,7 @@ HashTable ht_create(char type);
  * @ht  - the hashtable in which the key will be saved
  * @key - the key for which we want to get the hashed value in the hashtable
  */
-long int ht_hash( HashTable ht, char *key );
+unsigned long int ht_hash( HashTable ht, char *key );
 
 /*
  * ht_newpair - Creates a key-value pair

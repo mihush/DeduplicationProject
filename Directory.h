@@ -68,21 +68,21 @@ void dir_destroy(Dir dir);
  *
  * @dir - pointer to the directory
  */
-unsigned long dir_get_SN(Dir dir);
+//unsigned long dir_get_SN(Dir dir);
 
 /*
  * dir_get_ID - Return pointer to the ID of directory
  *
  * @dir - pointer to the directory
  */
-char* dir_get_ID(Dir dir);
+//char* dir_get_ID(Dir dir);
 
 /*
  * dir_get_depth - Return the depth of the directory
  *
  * @dir - pointer to the directory
  */
-unsigned int dir_get_depth(Dir dir);
+//unsigned int dir_get_depth(Dir dir);
 
 /*
  * dir_add_file - Adds file to a directory object by saving its' ID in the files list of the directory

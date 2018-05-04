@@ -59,14 +59,6 @@ static  void free_sn(ListElement element){
     free(element);
 }
 
-
-
-
-
-
-
-
-
 /* ******************** START ******************** object_info struct ******************** START ******************** */
 
 /*

@@ -53,13 +53,17 @@ ErrorCode block_add_file(Block block , char* file_id){
     if(file_id == NULL || block == NULL){ //Check input is valid
         return INVALID_INPUT;
     }
+    bool object_exists = false;
 
-    EntryF result = ht_setF(block->files_ht, file_id);
+    EntryF result = ht_setF(block->files_ht, file_id, &object_exists);
     if(result == NULL){ //Check for memory allocation
         return OUT_OF_MEMORY;
     }
 
-    (block->shared_by_num_files)++;
+    if(object_exists == false){
+        (block->shared_by_num_files)++;
+    }
+
     return SUCCESS;
 }
 

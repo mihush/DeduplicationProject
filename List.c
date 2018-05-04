@@ -20,6 +20,7 @@ struct List_t {
     Node first;
     Node last;
     Node iterator;
+    int size;
     CopyListElement copyElement;
     FreeListElement freeElement;
 };
@@ -29,6 +30,7 @@ struct List_t {
 
 static int listGetIndexOfIterator(List list);
 static void destroyNodes(Node toDestroy, FreeListElement freeFunction);
+static void destroyNodes_NonRec(Node toDestroy, FreeListElement freeFunction);
 static Node nodeCreate(ListElement data, CopyListElement copyFunction);
 
 /* ----END---- STATIC FUNCTION DECLARATIONS ----END---- */
@@ -48,6 +50,7 @@ List listCreate(CopyListElement copyElement, FreeListElement freeElement) {
     newList->first = NULL;
     newList->last = NULL;
     newList->iterator = NULL;
+    newList->size = 0;
     return newList;
 }
 
@@ -55,7 +58,8 @@ void listDestroy(List list) {
     if (!list) {
         return;
     }
-    destroyNodes(list->first, list->freeElement);
+    //printf("List Size is: %d\n", list->size);
+    destroyNodes_NonRec(list->first, list->freeElement);
     free(list);
 }
 
@@ -170,6 +174,7 @@ ListResult listInsertFirst(List list, ListElement element) {
     if(!list->last){
         list->last = list->first;
     }
+    (list->size)++;
     return LIST_SUCCESS;
 }
 
@@ -198,8 +203,9 @@ ListResult listInsertLast(List list, ListElement element) {
         list->last->next = newNode;
         list->last = newNode;
     }
-    //if we want to update the list iterator TODO - check if hurt the list-foreach in implementation
-    list->iterator = list->last; //TODO - might not needed this - so can be in remark
+    //if we want to update the list iterator
+    list->iterator = list->last;
+    (list->size)++;
     return LIST_SUCCESS;
 }
 
@@ -210,12 +216,13 @@ ListResult listClear(List list) {
         return LIST_NULL_ARGUMENT;
     }
     //destroy all nodes
-    destroyNodes(list->first,list->freeElement);
+    destroyNodes_NonRec(list->first,list->freeElement);
     list->first = NULL;
     list->last = NULL;
     list->iterator = NULL;
     return LIST_SUCCESS;
 }
+
 /*------------- End - Structure Functions -------------*/
 
 /* ------------------- STATIC FUNCTIONS ---------------------- */
@@ -249,9 +256,28 @@ static void destroyNodes(Node toDestroy, FreeListElement freeFunction) {
     if (!toDestroy) {
         return;
     }
+
     destroyNodes(toDestroy->next, freeFunction);
     freeFunction(toDestroy->data);
     free(toDestroy);
+}
+
+static void destroyNodes_NonRec(Node toDestroy, FreeListElement freeFunction) {
+    if (!toDestroy) {
+        return;
+    }
+
+    Node current = toDestroy;
+    Node next;
+    while(current != NULL){
+        next = current->next;
+        freeFunction(current->data);
+        free(current);
+        current = next;
+    }
+    //destroyNodes(toDestroy->next, freeFunction);
+    //freeFunction(toDestroy->data);
+    //free(toDestroy);
 }
 
 /* @param data - the data to add to the node

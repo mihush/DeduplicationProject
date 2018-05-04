@@ -45,7 +45,7 @@ HashTable ht_create(char type) {
     return ht;
 }
 
-long int ht_hash( HashTable ht, char *key ) {
+unsigned long int ht_hash( HashTable ht, char *key ) {
     unsigned long int hashval = 0;
     int i = 0;
     /* Convert our string to an integer */
@@ -62,6 +62,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
                  unsigned long physical_sn , char dedup_type){
     Entry newpair  = malloc(sizeof(*newpair));
     if(newpair == NULL){
+        //printf("ERROR allocating pair \n");
         return NULL;
     }
 
@@ -83,6 +84,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     if(newpair->data == NULL) {
         free(newpair->key);
         free(newpair);
+        //printf("ERROR allocating pair-data \n");
         return NULL;
     }
 
@@ -176,11 +178,14 @@ void data_destroy(Data data, char flag , char dedup_type){
 }
 
 void hashTable_destroy(HashTable ht , char flag , char dedup_type){
+    if(!ht){
+        return;
+    }
     long size_table = ht->size_table;
     //long size_of_lists = 0;
     struct entry_t* temp_to_free;
     // Remove lists elements of each HashTable cell
-    for(int i = 0 ; i < size_table ; i++){
+    for(long i = 0 ; i < size_table ; i++){
         while(ht->table[i]) {         // free each list element of cell i
             temp_to_free = ht->table[i];
             ht->table[i] = temp_to_free->next;

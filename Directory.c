@@ -61,7 +61,6 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
         free(dir);
         return NULL;
     }
-
     return dir;
 }
 
@@ -78,7 +77,7 @@ void dir_destroy(Dir dir){
     listDestroy(dir->files_list);
     free(dir);
 }
-
+/*
 unsigned long dir_get_SN(Dir dir){
     assert(dir);
     return dir->dir_sn;
@@ -93,7 +92,7 @@ unsigned int dir_get_depth(Dir dir){
     assert(dir);
     return dir->dir_depth;
 }
-
+*/
 ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
     if(dir == NULL || file_sn < 0){
         return INVALID_INPUT;
@@ -108,8 +107,8 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
     if(res != LIST_SUCCESS){
         free(temp);
         return OUT_OF_MEMORY;
-
     }
+
     (dir->num_of_files)++;
     free(temp);
     return SUCCESS;

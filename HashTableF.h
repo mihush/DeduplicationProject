@@ -11,6 +11,7 @@
 #include <limits.h>
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 /* **************************************************** INCLUDES **************************************************** */
 /* ****************************************************************************************************************** */
@@ -65,7 +66,7 @@ EntryF ht_newpairF(char *key);
  * @ht  - the hashtable to which the object will be added
  * @key - the hashed id of the file
  */
-EntryF ht_setF(HashTableF ht, char *key);
+EntryF ht_setF(HashTableF ht, char *key, bool* object_exists);
 
 /*
  * ht_getF - Retrieve pointer for file element with corresponding key in hash table

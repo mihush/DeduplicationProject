@@ -66,7 +66,7 @@ EntryF ht_newpairF(char *key){
     return newpair;
 }
 
-EntryF ht_setF(HashTableF ht, char *key) {
+EntryF ht_setF(HashTableF ht, char *key , bool* object_exists) {
     EntryF newpair = NULL;
     EntryF next = NULL;
     EntryF last = NULL;
@@ -83,6 +83,7 @@ EntryF ht_setF(HashTableF ht, char *key) {
     /* There's already a pair. Let's replace that string. */
     if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
         //Return the pointer to the Block/File that already exists in the hash
+        *object_exists = true;
         return next;
     } else { /* Nope, couldn't find it.  Time to grow a pair. */
         newpair = ht_newpairF(key); //allocate new pair
