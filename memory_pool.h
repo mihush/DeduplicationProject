@@ -28,6 +28,7 @@ typedef struct memory_pool_t
 */
 void* memory_pool_init(PMemory_pool pool);
 
+
 /*
 	@Function:	memory_pool_alloc
 	@Params:	pool -	Pointer to the pool from which to allocate memory from.
