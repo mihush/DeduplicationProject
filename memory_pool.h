@@ -11,7 +11,7 @@
 #include <assert.h>
 
 
-#define POOL_INITIAL_SIZE 256*1024
+#define POOL_INITIAL_SIZE 2048*8192
 
 typedef struct memory_pool_t
 {

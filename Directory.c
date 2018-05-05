@@ -37,12 +37,14 @@ static  void free_dir_info(ListElement directory_info){
 /* ****************************************************************************************************************** */
 /* ****************************************************************************************************************** */
 /* ****************** START ****************** Directory STRUCT Functions ****************** START ****************** */
-Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
-    Dir dir = malloc(sizeof(*dir));
+Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , PMemory_pool mem_pool){
+    //Dir dir = malloc(sizeof(*dir));
+    Dir dir = memory_pool_alloc(mem_pool , sizeof(*dir));
     if(dir == NULL){
         return NULL;
     }
-    dir->dir_id = malloc((sizeof(char)*(strlen(dir_id) + 1)));
+    //dir->dir_id = malloc((sizeof(char)*(strlen(dir_id) + 1)));
+    dir->dir_id = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(dir_id) + 1)));
     if(!(dir->dir_id)){
         free(dir);
         return NULL;
@@ -53,8 +55,8 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn){
     dir->num_of_files = 0;
     dir->num_of_subdirs = 0;
     dir->parent_dir_sn = 0; //  not known in the time of creation
-    dir->dirs_list = listCreate(copy_directory_info , free_dir_info);
-    dir->files_list = listCreate(copy_directory_info , free_dir_info);
+    dir->dirs_list = listCreate_pool(copy_directory_info , free_dir_info , mem_pool);
+    dir->files_list = listCreate_pool(copy_directory_info , free_dir_info , mem_pool);
 
     if((!dir->files_list) || (!dir->dirs_list)){
         free(dir->dir_id);
@@ -77,23 +79,8 @@ void dir_destroy(Dir dir){
     listDestroy(dir->files_list);
     free(dir);
 }
-/*
-unsigned long dir_get_SN(Dir dir){
-    assert(dir);
-    return dir->dir_sn;
-}
 
-char* dir_get_ID(Dir dir){
-    assert(dir);
-    return dir->dir_id;
-}
-
-unsigned int dir_get_depth(Dir dir){
-    assert(dir);
-    return dir->dir_depth;
-}
-*/
-ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
+ErrorCode dir_add_file(Dir dir , unsigned long file_sn , PMemory_pool mem_pool){
     if(dir == NULL || file_sn < 0){
         return INVALID_INPUT;
     }
@@ -103,7 +90,7 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
     }
 
     *temp = file_sn;
-    ListResult res = listInsertFirst(dir->files_list , temp);
+    ListResult res = listInsertFirst_pool(dir->files_list , temp ,mem_pool );
     if(res != LIST_SUCCESS){
         free(temp);
         return OUT_OF_MEMORY;
@@ -114,7 +101,7 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn){
     return SUCCESS;
 }
 
-ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn){
+ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn , PMemory_pool mem_pool){
     if(dir == NULL || dir_sn < 0){
         return INVALID_INPUT;
     }
@@ -123,7 +110,7 @@ ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn){
         return OUT_OF_MEMORY;
     }
     *temp = dir_sn;
-    ListResult res = listInsertFirst(dir->dirs_list, temp);
+    ListResult res = listInsertFirst_pool(dir->dirs_list, temp , mem_pool);
     if(res != LIST_SUCCESS){
         free(temp);
         return OUT_OF_MEMORY;

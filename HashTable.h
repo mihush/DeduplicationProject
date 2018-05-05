@@ -50,7 +50,7 @@ typedef struct hashtable_t *HashTable;
  *
  * @type - can be one of 3 : 'B' for blocks , 'F' for files and 'D' for directories
  */
-HashTable ht_create(char type);
+HashTable ht_create(char type , PMemory_pool mem_pool);
 
 /*
  * ht_hash - Given a key (string) Generates a Hash Value by which it will be stored in the table
@@ -66,7 +66,7 @@ unsigned long int ht_hash( HashTable ht, char *key );
  *               - For File - size parameter will be -1
  */
 Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag ,
-                 unsigned long physical_sn , char dedup_type);
+                 unsigned long physical_sn , char dedup_type , PMemory_pool mem_pool);
 
 /*
  * ht_set - Insert a key-value pair into a hash table (General function thus
@@ -81,7 +81,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
  * @physical_sn   - the serial number of a physical file
  */
 Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag,
-            bool* object_exists , unsigned long physical_sn, char dedup_type);
+            bool* object_exists , unsigned long physical_sn, char dedup_type , PMemory_pool mem_pool);
 
 /*
  * ht_get - Retrieve pointer for block/file element with corresponding key in hash table
@@ -117,7 +117,7 @@ void hashTable_destroy(HashTable ht , char flag ,  char dedup_type);
  */
 Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
                   File file , File file_obj_p, unsigned long* physical_files_sn,
-                  char dedup_type);
+                  char dedup_type , PMemory_pool mem_pool);
 
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */
 

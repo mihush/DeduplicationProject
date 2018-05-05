@@ -46,7 +46,7 @@ typedef struct dir_t *Dir;
  * @depth  - the depth of the directory in the file system (Root is in depth 0)
  * @dir_sn - serial number of the directory
  */
-Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn);
+Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , PMemory_pool mem_pool);
 
 /*
  * dir_set_parent_dir_sn - updates the parent serial number of the directory received as input
@@ -64,34 +64,13 @@ ErrorCode dir_set_parent_dir_sn(Dir dir , unsigned long sn);
 void dir_destroy(Dir dir);
 
 /*
- * dir_get_SN - Return the serial number of directory
- *
- * @dir - pointer to the directory
- */
-//unsigned long dir_get_SN(Dir dir);
-
-/*
- * dir_get_ID - Return pointer to the ID of directory
- *
- * @dir - pointer to the directory
- */
-//char* dir_get_ID(Dir dir);
-
-/*
- * dir_get_depth - Return the depth of the directory
- *
- * @dir - pointer to the directory
- */
-//unsigned int dir_get_depth(Dir dir);
-
-/*
  * dir_add_file - Adds file to a directory object by saving its' ID in the files list of the directory
  *                and updates the files counter of the folder
  *
  *  @dir     - pointer to the directory
  *  @file_sn - the serial number of the file that should be added to the directory
  */
-ErrorCode dir_add_file(Dir dir , unsigned long file_sn);
+ErrorCode dir_add_file(Dir dir , unsigned long file_sn , PMemory_pool mem_pool);
 
 /* Adding sub_dir into the directory */
 /*
@@ -101,7 +80,7 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn);
  *  @dir    - pointer to the directory
  *  @dir_sn - the serial number of the sub-directory that should be added to the directory
  */
-ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn);
+ErrorCode dir_add_sub_dir(Dir dir , unsigned long dir_sn , PMemory_pool mem_pool);
 
 /* ******************* END ******************* Directory STRUCT Functions ******************* END ******************* */
 

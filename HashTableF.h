@@ -12,6 +12,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include "memory_pool.h"
 
 /* **************************************************** INCLUDES **************************************************** */
 /* ****************************************************************************************************************** */
@@ -44,7 +45,7 @@ typedef struct hashtablef_t *HashTableF;
  *
  * @type - can be one of 3 : 'B' for blocks , 'F' for files and 'D' for directories
  */
-HashTableF ht_createF(char type);
+HashTableF ht_createF(char type , PMemory_pool mem_pool);
 
 /*
  * ht_hashF - Given a key (string) Generates a Hash Value by which it will be stored in the table
@@ -58,7 +59,7 @@ long int ht_hashF( HashTableF ht, char *key );
  * ht_newpair - Creates a key-value pair
  *              the key is the file id and the value is NULL
  */
-EntryF ht_newpairF(char *key);
+EntryF ht_newpairF(char *key , PMemory_pool mem_pool);
 
 /*
  *  ht_setF - Insert a key-value pair into a hash table (General function thus
@@ -66,7 +67,7 @@ EntryF ht_newpairF(char *key);
  * @ht  - the hashtable to which the object will be added
  * @key - the hashed id of the file
  */
-EntryF ht_setF(HashTableF ht, char *key, bool* object_exists);
+EntryF ht_setF(HashTableF ht, char *key, bool* object_exists , PMemory_pool mem_pool);
 
 /*
  * ht_getF - Retrieve pointer for file element with corresponding key in hash table

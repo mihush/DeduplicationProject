@@ -6,13 +6,15 @@
 #include "File.h"
 /* ******************* START ******************* File STRUCT Functions ******************* START ******************** */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
-                 unsigned long physical_sn , char dedup_type){
-    File file = malloc(sizeof(*file));
+                 unsigned long physical_sn , char dedup_type , PMemory_pool mem_pool){
+    //File file = malloc(sizeof(*file));
+    File file = memory_pool_alloc(mem_pool , sizeof(*file));
     if(file == NULL){
         return NULL;
     }
 
-    file->file_id = malloc(sizeof(char)* (FILE_ID_LEN + 1));
+    //file->file_id = malloc(sizeof(char)* (FILE_ID_LEN + 1));
+    file->file_id = memory_pool_alloc(mem_pool , sizeof(char)* (FILE_ID_LEN + 1));
     if(file->file_id == NULL){
         free(file);
         return NULL;
@@ -28,7 +30,7 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
     file->flag = 'P';
     file->physical_sn = physical_sn; // will be updated from file_compare
 
-    file->blocks_list = listCreate(copy_block_info , free_block_info);
+    file->blocks_list = listCreate_pool(copy_block_info , free_block_info , mem_pool);
     if(file->blocks_list == NULL){
         free(file->file_id);
         free(file);
@@ -36,21 +38,13 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
     }
 
     if(dedup_type == 'F'){
-//        file->files_ht = ht_createF('N');
-//        if(file->files_ht == NULL){
-//            free(file->file_id);
-//            listDestroy(file->blocks_list);
-//            free(file);
-//            return NULL;
-//        }
-//        ht_setF(file->files_ht, file_id);
-        file->logical_files_list = listCreate(copy_sn , free_sn);
+        file->logical_files_list = listCreate_pool(copy_sn , free_sn , mem_pool);
         if(file->blocks_list == NULL){
             free(file->file_id);
             free(file);
             return NULL;
         }
-        listInsertLast(file->logical_files_list , &(file->file_sn));
+        listInsertLast_pool(file->logical_files_list , &(file->file_sn) , mem_pool);
     }
 
     return file;
@@ -61,31 +55,30 @@ void file_destroy(File file , char dedup_type){
     free(file->file_id);
     listDestroy(file->blocks_list);
     if(dedup_type == 'F'){
-        //hashTableF_destroy(file->files_ht);
         listDestroy(file->logical_files_list);
     }
     free(file);
 }
 
-unsigned long file_get_SN(File file){
-    assert(file);
-    return file->file_sn;
-}
+//unsigned long file_get_SN(File file){
+//    assert(file);
+//    return file->file_sn;
+//}
 
-char* file_get_ID(File file){
-    assert(file);
-    return file->file_id;
-}
+//char* file_get_ID(File file){
+//    assert(file);
+//    return file->file_id;
+//}
 
-unsigned int file_get_depth(File file){
-    assert(file);
-    return file->file_depth;
-}
+//unsigned int file_get_depth(File file){
+//    assert(file);
+//    return file->file_depth;
+//}
 
-int file_get_num_blocks(File file){
-    assert(file);
-    return file->num_blocks;
-}
+//int file_get_num_blocks(File file){
+//    assert(file);
+//    return file->num_blocks;
+//}
 
 ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
     assert(file);
@@ -104,7 +97,7 @@ ErrorCode file_set_logical_flag(File file){
     return SUCCESS;
 }
 
-ErrorCode file_add_block(File file , char* block_id , int block_size){
+ErrorCode file_add_block(File file , char* block_id , int block_size , PMemory_pool mem_pool){
     if(file == NULL || block_id == NULL || block_size < 0){
         return INVALID_INPUT;
     }
@@ -121,7 +114,7 @@ ErrorCode file_add_block(File file , char* block_id , int block_size){
     strcpy(bi->id , block_id);
     bi->size = block_size;
 
-    ListResult res = listInsertLast(file->blocks_list , bi);
+    ListResult res = listInsertLast_pool(file->blocks_list , bi , mem_pool);
 
     if(res != LIST_SUCCESS){
         free(bi->id);

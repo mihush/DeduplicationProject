@@ -3,12 +3,9 @@
 //
 
 /*----------------- includes & Defines -----------------*/
-#include <stdio.h>
-#include <stdlib.h>
 #include "List.h"
 
 #define LIST_IS_NULL -1
-#define INDEX_OF_FIRST 0
 
 typedef struct node {
     ListElement data;
@@ -29,12 +26,12 @@ struct List_t {
 /* ---------- STATIC FUNCTION DECLARATIONS ------------ */
 
 static int listGetIndexOfIterator(List list);
-static void destroyNodes(Node toDestroy, FreeListElement freeFunction);
+//static void destroyNodes(Node toDestroy, FreeListElement freeFunction);
 static void destroyNodes_NonRec(Node toDestroy, FreeListElement freeFunction);
 static Node nodeCreate(ListElement data, CopyListElement copyFunction);
+static Node nodeCreate_pool(ListElement data, CopyListElement copyFunction , PMemory_pool mem_pool);
 
 /* ----END---- STATIC FUNCTION DECLARATIONS ----END---- */
-
 /*---------------- Structure Functions ----------------*/
 List listCreate(CopyListElement copyElement, FreeListElement freeElement) {
     //Check for invalid arguments
@@ -54,11 +51,29 @@ List listCreate(CopyListElement copyElement, FreeListElement freeElement) {
     return newList;
 }
 
+List listCreate_pool(CopyListElement copyElement , FreeListElement freeElement , PMemory_pool mem_pool) {
+    //Check for invalid arguments
+    if (!copyElement || !freeElement) {
+        return NULL;
+    }
+    //List newList = malloc(sizeof(*newList));
+    List newList = memory_pool_alloc(mem_pool , sizeof(*newList));
+    if (!newList) {
+        return NULL;
+    }
+    newList->copyElement = copyElement;
+    newList->freeElement = freeElement;
+    newList->first = NULL;
+    newList->last = NULL;
+    newList->iterator = NULL;
+    newList->size = 0;
+    return newList;
+}
+
 void listDestroy(List list) {
     if (!list) {
         return;
     }
-    //printf("List Size is: %d\n", list->size);
     destroyNodes_NonRec(list->first, list->freeElement);
     free(list);
 }
@@ -96,6 +111,7 @@ List listCopy(List list) {
     return copyList;
 }
 
+
 int listGetSize(List list) {
     //Check for invalid arguments
     if (list == NULL) {
@@ -123,17 +139,17 @@ ListElement listGetFirst(List list) {
     return list->first->data;
 }
 
-ListElement listGetLast(List list) {
-    //Check for invalid arguments
-    if (!list) {
-        return NULL;
-    }
-    list->iterator = list->last;
-    if (!list->iterator || !list->iterator->data) {
-        return NULL;
-    }
-    return list->last->data;
-}
+//ListElement listGetLast(List list) {
+//    //Check for invalid arguments
+//    if (!list) {
+//        return NULL;
+//    }
+//    list->iterator = list->last;
+//    if (!list->iterator || !list->iterator->data) {
+//        return NULL;
+//    }
+//    return list->last->data;
+//}
 
 ListElement listGetNext(List list) {
     //Check for invalid arguments
@@ -161,7 +177,7 @@ ListResult listInsertFirst(List list, ListElement element) {
         return LIST_NULL_ARGUMENT;
     }
     //create a new node for insertion in the beginning
-    Node newNode = nodeCreate(element, list->copyElement);
+    Node newNode = nodeCreate(element , list->copyElement);
     if (!newNode) {
         return LIST_OUT_OF_MEMORY;
     }
@@ -178,13 +194,35 @@ ListResult listInsertFirst(List list, ListElement element) {
     return LIST_SUCCESS;
 }
 
+ListResult listInsertFirst_pool(List list, ListElement element , PMemory_pool mem_pool) {
+    //NULL Arguments in the function
+    if (list == NULL || element == NULL) {
+        return LIST_NULL_ARGUMENT;
+    }
+    //create a new node for insertion in the beginning
+    Node newNode = nodeCreate_pool(element , list->copyElement , mem_pool);
+    if (!newNode) {
+        return LIST_OUT_OF_MEMORY;
+    }
+    //set next node of new node to the first node of list
+    newNode->next = list->first;
+    //and set the first node in the list as the new node
+    list->first = newNode;
+    //if we insert the first element
+    //update also the last to point on this element
+    if(!list->last){
+        list->last = list->first;
+    }
+    (list->size)++;
+    return LIST_SUCCESS;
+}
 ListResult listInsertLast(List list, ListElement element) {
     //Check for invalid arguments
     if (!list || !element) {
         return LIST_NULL_ARGUMENT;
     }
     //create a new node for insertion in the end
-    Node newNode = nodeCreate(element, list->copyElement);
+    Node newNode = nodeCreate(element , list->copyElement);
     if (!newNode) {
         return LIST_OUT_OF_MEMORY;
     }
@@ -209,6 +247,36 @@ ListResult listInsertLast(List list, ListElement element) {
     return LIST_SUCCESS;
 }
 
+ListResult listInsertLast_pool(List list, ListElement element, PMemory_pool mem_pool) {
+    //Check for invalid arguments
+    if (!list || !element) {
+        return LIST_NULL_ARGUMENT;
+    }
+    //create a new node for insertion in the end
+    Node newNode = nodeCreate_pool(element , list->copyElement , mem_pool);
+    if (!newNode) {
+        return LIST_OUT_OF_MEMORY;
+    }
+    //if we insert the first element
+    if(!list->first && !list->last){
+        //set next node of new node to the first node of list
+        newNode->next = NULL;
+        //and set the first node in the list as the new node
+        list->last = newNode;
+        list->first = list->last;
+    } else { //one or more elements
+        if(!list->last){ //sanity check we don't try to go to NULL arg
+            return LIST_NULL_ARGUMENT;
+        }
+        newNode->next = NULL;
+        list->last->next = newNode;
+        list->last = newNode;
+    }
+    //if we want to update the list iterator
+    list->iterator = list->last;
+    (list->size)++;
+    return LIST_SUCCESS;
+}
 
 ListResult listClear(List list) {
     //Check Invalid arguments
@@ -252,15 +320,15 @@ static int listGetIndexOfIterator(List list) {
  * @param freeFunction - the function with which to free the type "ListElement"
  * destroys the set of nodes that begins with the supplied node
  */
-static void destroyNodes(Node toDestroy, FreeListElement freeFunction) {
-    if (!toDestroy) {
-        return;
-    }
-
-    destroyNodes(toDestroy->next, freeFunction);
-    freeFunction(toDestroy->data);
-    free(toDestroy);
-}
+//static void destroyNodes(Node toDestroy, FreeListElement freeFunction) {
+//    if (!toDestroy) {
+//        return;
+//    }
+//
+//    destroyNodes(toDestroy->next, freeFunction);
+//    freeFunction(toDestroy->data);
+//    free(toDestroy);
+//}
 
 static void destroyNodes_NonRec(Node toDestroy, FreeListElement freeFunction) {
     if (!toDestroy) {
@@ -290,6 +358,24 @@ static Node nodeCreate(ListElement data, CopyListElement copyFunction) {
         return NULL;
     }
     Node newNode = malloc(sizeof(*newNode));
+
+    if (!newNode) {
+        return NULL;
+    }
+    newNode->data = copyFunction(data);
+    if (!newNode->data) {
+        free(newNode);
+        return NULL;
+    }
+    newNode->next = NULL;
+    return newNode;
+}
+static Node nodeCreate_pool(ListElement data, CopyListElement copyFunction , PMemory_pool mem_pool) {
+    if (!data) {
+        return NULL;
+    }
+    //Node newNode = malloc(sizeof(*newNode));
+    Node newNode = memory_pool_alloc(mem_pool , sizeof(*newNode));
     if (!newNode) {
         return NULL;
     }

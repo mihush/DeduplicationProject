@@ -59,7 +59,7 @@ typedef struct file_t *File;
  * @physical_sn - in case of file level deduplication, there are 2 types of files - physical and logical
  */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
-                 unsigned long physical_sn , char dedup_type);
+                 unsigned long physical_sn , char dedup_type , PMemory_pool mem_pool);
 
 /*
  *  file_destroy - Destroys and frees space of a file structure
@@ -73,27 +73,27 @@ void file_destroy(File file , char dedup_type);
  *
  *  @file - Pointer to the file object
  */
-unsigned long file_get_SN(File file);
+//unsigned long file_get_SN(File file);
 
 /*
  * file_get_ID - Returns pointer to the hashed ID of the file
  *
  * @file - Pointer to the file object
  */
-char* file_get_ID(File file);
+//char* file_get_ID(File file);
 
 /*
  *  file_get_depth - Returns the depth of the file in the hierarchy
  *
  *  @file - Pointer to the file object
  */
-unsigned int file_get_depth(File file);
+//unsigned int file_get_depth(File file);
 /*
  *  file_get_num_blocks - returns the number of blocks the file contains
  *
  *  @file - Pointer to the file object
  */
-int file_get_num_blocks(File file);
+//int file_get_num_blocks(File file);
 
 /*
  *  file_get_num_blocks - returns the number of blocks the file contains
@@ -125,7 +125,7 @@ ErrorCode file_set_logical_flag(File file);
  *  @block_id   - hashed id of the block
  *  @block_size - size of the block
  */
-ErrorCode file_add_block(File file , char* block_id , int block_size);
+ErrorCode file_add_block(File file , char* block_id , int block_size , PMemory_pool mem_pool);
 
 /* ******************** END ******************** File STRUCT Functions ******************** END ********************* */
 #endif //DEDUPLICATION_PROJECT_FILE_H

@@ -7,11 +7,12 @@
 /* **************************************************** INCLUDES **************************************************** */
 /* ******************** START ******************** HashTable Functions ******************** START ******************* */
 
-HashTableF ht_createF(char type) {
+HashTableF ht_createF(char type, PMemory_pool mem_pool) {
     HashTableF ht = NULL;
 
     /* Allocate the table itself */
-    ht = malloc(sizeof(*ht));
+    //ht = malloc(sizeof(*ht));
+    ht = memory_pool_alloc(mem_pool , sizeof(*ht));
     if(!ht){ //check allocation was successful
         return NULL;
     }
@@ -24,7 +25,8 @@ HashTableF ht_createF(char type) {
             break;
     }
     /* Allocate pointers to the head nodes */
-    ht -> table = malloc(sizeof(EntryF) * (ht->size_table));
+    //ht -> table = malloc(sizeof(EntryF) * (ht->size_table));
+    ht -> table = memory_pool_alloc(mem_pool , (sizeof(EntryF) * (ht->size_table)));
     if(!ht -> table ){ //check array of pointers was allocated successfully
         free(ht);
         return NULL;
@@ -49,13 +51,15 @@ long int ht_hashF( HashTableF ht, char *key ) {
     return hashval % (ht->size_table);
 }
 
-EntryF ht_newpairF(char *key){
-    EntryF newpair  = malloc(sizeof(*newpair));
+EntryF ht_newpairF(char *key, PMemory_pool mem_pool){
+    //EntryF newpair  = malloc(sizeof(*newpair));
+    EntryF newpair  = memory_pool_alloc(mem_pool , sizeof(*newpair));
     if(newpair == NULL){
         return NULL;
     }
 
-    newpair->key = malloc(sizeof(char)*(strlen(key)+1));
+    //newpair->key = malloc(sizeof(char)*(strlen(key)+1));
+    newpair->key = memory_pool_alloc(mem_pool , sizeof(char)*(strlen(key)+1));
     if(newpair->key == NULL){
         free(newpair);
         return NULL;
@@ -66,7 +70,7 @@ EntryF ht_newpairF(char *key){
     return newpair;
 }
 
-EntryF ht_setF(HashTableF ht, char *key , bool* object_exists) {
+EntryF ht_setF(HashTableF ht, char *key , bool* object_exists, PMemory_pool mem_pool) {
     EntryF newpair = NULL;
     EntryF next = NULL;
     EntryF last = NULL;
@@ -86,7 +90,7 @@ EntryF ht_setF(HashTableF ht, char *key , bool* object_exists) {
         *object_exists = true;
         return next;
     } else { /* Nope, couldn't find it.  Time to grow a pair. */
-        newpair = ht_newpairF(key); //allocate new pair
+        newpair = ht_newpairF(key , mem_pool); //allocate new pair
         if(newpair == NULL){
             return NULL;
         }

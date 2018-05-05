@@ -41,7 +41,8 @@ typedef struct block_t *Block;
  * @block_sn   - serial number of the block
  * @block_size - the size of the block
  */
-Block block_create(char* block_id , unsigned long block_sn , unsigned int block_size);
+Block block_create(char* block_id , unsigned long block_sn ,
+                   unsigned int block_size,PMemory_pool mem_pool);
 
 /*
  *  block_destroy - Destroys and frees space of a block structure
@@ -55,14 +56,14 @@ void block_destroy(Block block);
  *
  *  @block - pointer to the block structure
  */
-long block_get_SN(Block block);
+//long block_get_SN(Block block);
 
 /*
  *  block_get_ID - Returns the hashed id of the block
  *
  *  @block - pointer to the block structure
  */
-char* block_get_ID(Block block);
+//har* block_get_ID(Block block);
 
 /*
  *  block_add_file - adds the file containing the block to the files list saved in the block
@@ -70,7 +71,7 @@ char* block_get_ID(Block block);
  *  @block   - pointer to the block structure to which we want to add the file
  *  @file_id - the id of the file that contains the block
  */
-ErrorCode block_add_file(Block block , char* file_id);
+ErrorCode block_add_file(Block block , char* file_id , PMemory_pool mem_pool);
 
 
 /* ******************** END ******************** Block STRUCT Functions ******************** END ******************** */

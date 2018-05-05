@@ -6,6 +6,9 @@
 #define DEDUP_LIST_H
 
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "memory_pool.h"
 /**
 * Generic List Container
 *
@@ -49,7 +52,6 @@ typedef enum ListResult_t {
 	LIST_SUCCESS,
 	LIST_NULL_ARGUMENT,
 	LIST_OUT_OF_MEMORY,
-	LIST_INVALID_CURRENT,
 } ListResult;
 
 /** Element data type for list container */
@@ -137,6 +139,7 @@ typedef bool(*FilterListElement)(ListElement, ListFilterKey);
 * 	A new List in case of success.
 */
 List listCreate(CopyListElement copyElement, FreeListElement freeElement);
+List listCreate_pool(CopyListElement copyElement , FreeListElement freeElement , PMemory_pool pool);
 
 /**
 * Creates a copy of target list.
@@ -208,7 +211,7 @@ ListElement listGetFirst(List list);
 * NULL is a NULL pointer was sent or the list is empty.
 * The first element of the list otherwise
 */
-ListElement listGetLast(List list);
+//ListElement listGetLast(List list);
 
 /**
 * Advances the list's iterator to the next element and return it
@@ -244,6 +247,7 @@ ListElement listGetCurrent(List list);
 * LIST_SUCCESS the element has been inserted successfully
 */
 ListResult listInsertFirst(List list, ListElement element);
+ListResult listInsertFirst_pool(List list, ListElement element , PMemory_pool mem_pool);
 
 /**
 * Adds a new element to the list, the new element will be the last element
@@ -258,6 +262,7 @@ ListResult listInsertFirst(List list, ListElement element);
 * LIST_SUCCESS the element has been inserted successfully
 */
 ListResult listInsertLast(List list, ListElement element);
+ListResult listInsertLast_pool(List list, ListElement element, PMemory_pool mem_pool);
 
 /**
 * Removes all elements from target list.

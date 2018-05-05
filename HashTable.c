@@ -10,10 +10,11 @@
 
 /* **************************************************** DEFINES ***************************************************** */
 /* ******************** START ******************** HashTable Functions ******************** START ******************* */
-HashTable ht_create(char type) {
+HashTable ht_create(char type , PMemory_pool mem_pool) {
     HashTable ht = NULL;
+    //ht = malloc(sizeof(*ht)); //Allocate the table
+    ht = memory_pool_alloc(mem_pool , sizeof(*ht)); //Allocate the table
 
-    ht = malloc(sizeof(*ht)); //Allocate the table
     if(!ht){ //check allocation was successful
         return NULL;
     }
@@ -33,7 +34,8 @@ HashTable ht_create(char type) {
     }
 
     /* Allocate pointers to the head nodes */
-    ht -> table = malloc(sizeof(Entry) * (ht->size_table));
+    //ht -> table = malloc(sizeof(Entry) * (ht->size_table));
+    ht -> table = memory_pool_alloc(mem_pool , (sizeof(Entry)*(ht->size_table)));
     if(!ht -> table ){ //check array od pointers was allocated successfully
         free(ht);
         return NULL;
@@ -59,14 +61,14 @@ unsigned long int ht_hash( HashTable ht, char *key ) {
 }
 
 Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag ,
-                 unsigned long physical_sn , char dedup_type){
+                 unsigned long physical_sn , char dedup_type , PMemory_pool mem_pool){
     Entry newpair  = malloc(sizeof(*newpair));
     if(newpair == NULL){
-        //printf("ERROR allocating pair \n");
         return NULL;
     }
+    //newpair->key = malloc(sizeof(char)*(strlen(key)+1));
+    newpair->key = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(key)+1)));
 
-    newpair->key = malloc(sizeof(char)*(strlen(key)+1));
     if(newpair->key == NULL){
         free(newpair);
         return NULL;
@@ -74,17 +76,16 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     newpair->key = strcpy(newpair->key , key);
 
     if(flag == 'B'){ // save the data object
-        newpair->data = block_create(key , sn, size);
+        newpair->data = block_create(key , sn, size , mem_pool);
     }else if( flag == 'D'){
-        newpair->data = dir_create(key , depth , sn);
+        newpair->data = dir_create(key , depth , sn , mem_pool);
     } else if(flag == 'F'){ //This is a file object
-        newpair->data = file_create(key , depth , sn , size , physical_sn , dedup_type);
+        newpair->data = file_create(key , depth , sn , size , physical_sn , dedup_type , mem_pool);
     }
 
     if(newpair->data == NULL) {
         free(newpair->key);
         free(newpair);
-        //printf("ERROR allocating pair-data \n");
         return NULL;
     }
 
@@ -93,7 +94,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
 }
 
 Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag,
-            bool* object_exists , unsigned long physical_sn, char dedup_type) {
+            bool* object_exists , unsigned long physical_sn, char dedup_type, PMemory_pool mem_pool) {
     Entry newpair = NULL;
     Entry next = NULL;
     Entry last = NULL;
@@ -102,7 +103,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
     next = ht->table[hash_key];
 
     if(dedup_type == 'B' && flag == 'F'){// We are using Block Level Deduplication and we are working on File object
-        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn, dedup_type);
+        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn, dedup_type , mem_pool);
         newpair->next = next;
         ht->table[hash_key] = newpair;
         return newpair->data;
@@ -123,7 +124,7 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
         *object_exists = true;
         return next->data;
     } else { /* Nope, could't find it.  Time to grow a pair. */
-        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn , dedup_type); //allocate new pair
+        newpair = ht_newpair(key, depth , sn, size, flag , physical_sn , dedup_type , mem_pool); //allocate new pair
         if(newpair == NULL){
             return NULL;
         }
@@ -201,7 +202,8 @@ void hashTable_destroy(HashTable ht , char flag , char dedup_type){
 }
 
 Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
-                  File file , File file_obj_p, unsigned long* physical_files_sn,char dedup_type){
+                  File file , File file_obj_p, unsigned long* physical_files_sn,
+                  char dedup_type , PMemory_pool mem_pool){
     assert(file && file_obj_p);
     bool physical_file_exist = false , blocks_differ = false;
     Block_Info first_block = (Block_Info)listGetFirst(file->blocks_list);
@@ -252,10 +254,7 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
     /* ---------------------------------- Adding the file to hash table ----------------------------------- */
     if(physical_file_exist == true) { // physical file already exits - add file to ht_files only
         file_set_logical_flag(file);
-
-        //ht_setF(temp_file->files_ht, file->file_id); // add logical file to the files ht of the physical we found
         listInsertLast(temp_file->logical_files_list , &(file->file_sn));
-
         (temp_file->num_files)++;
         file_set_physical_sn(file , temp_file->physical_sn); // set the physical sn of the logical file to be the one of the physical stored
         (*physical_files_sn)--;
@@ -265,10 +264,12 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
         hash_key = ht_hash(ht_physical_files , first_block_id);
         Entry ent = ht_physical_files->table[hash_key];
 
-        Entry newpair  = malloc(sizeof(*newpair));
+        //Entry newpair  = malloc(sizeof(*newpair));
+        Entry newpair  = memory_pool_alloc(mem_pool , sizeof(*newpair));
         assert(newpair);
 
-        newpair->key = malloc(sizeof(char)*(strlen(first_block_id) + 1));
+        //newpair->key = malloc(sizeof(char)*(strlen(first_block_id) + 1));
+        newpair->key = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(first_block_id) + 1)));
         assert(newpair->key);
 
         newpair->key = strcpy(newpair->key , first_block_id);
@@ -283,11 +284,13 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
     Entry curr = ht_files->table[hash_key_f];
 
     //Just add the logical file to the hashtable of logical files
-    Entry newpair_l  = malloc(sizeof(*newpair_l));
+    //Entry newpair_l  = malloc(sizeof(*newpair_l));
+    Entry newpair_l  = memory_pool_alloc(mem_pool , sizeof(*newpair_l));
     if(newpair_l == NULL){
         return NULL;
     }
-    newpair_l->key = malloc(sizeof(char)*(strlen(file->file_id)+1));
+    //newpair_l->key = malloc(sizeof(char)*(strlen(file->file_id)+1));
+    newpair_l->key = memory_pool_alloc(mem_pool , sizeof(char)*(strlen(file->file_id)+1));
     assert(newpair_l->key);
     newpair_l->key = strcpy(newpair_l->key , file->file_id);
     newpair_l->data = file;
