@@ -1,8 +1,6 @@
 //
 // Created by Polina on 12-Mar-18.
 //
-
-
 #include "File.h"
 /* ******************* START ******************* File STRUCT Functions ******************* START ******************** */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
@@ -15,8 +13,7 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
 
     file->file_id = memory_pool_alloc(mem_pool , sizeof(char)* (FILE_ID_LEN + 1));
     if(file->file_id == NULL){
-        //free(file);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
 
     file->file_id = strcpy(file->file_id , file_id);
@@ -31,34 +28,19 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
 
     file->blocks_list = listCreate_pool(copy_block_info , free_block_info , mem_pool);
     if(file->blocks_list == NULL){
-        //free(file->file_id);
-        //free(file);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
 
     if(dedup_type == 'F'){
         file->logical_files_list = listCreate_pool(copy_sn , free_sn , mem_pool);
         if(file->blocks_list == NULL){
-            //free(file->file_id);
-            //free(file);
-            return NULL;
+            return NULL; //All is allocated in POOL - Nothing to Free
         }
         listInsertLast_pool(file->logical_files_list , &(file->file_sn) , mem_pool);
     }
 
     return file;
 }
-
-//void file_destroy(File file , char dedup_type){
-//    assert(file);
-////    free(file->file_id);
-////    listDestroy(file->blocks_list);
-////    if(dedup_type == 'F'){
-////        listDestroy(file->logical_files_list);
-////    }
-////    free(file);
-//    return;
-//}
 
 ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
     assert(file);

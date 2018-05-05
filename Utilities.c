@@ -88,8 +88,7 @@ ListElement copy_block_info(ListElement block_info , PMemory_pool mem_pool){
     bi_copy->size = bi->size;
     bi_copy->id = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(bi->id) +1)));
     if(bi_copy->id == NULL){
-        //free(bi_copy);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
     strcpy(bi_copy->id , bi->id);
 
@@ -97,8 +96,8 @@ ListElement copy_block_info(ListElement block_info , PMemory_pool mem_pool){
 }
 
 void free_block_info(ListElement block_info){
-    //free(((Block_Info)(block_info))->id);
-    //free((Block_Info)(block_info));
+    //All is allocated in POOL - Nothing to Free
+    //Function exists for Compatibility to List Structure
     return;
 }
 

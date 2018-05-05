@@ -77,13 +77,6 @@ EntryF ht_setF(HashTableF ht, char *key, bool* object_exists , PMemory_pool mem_
  */
 DataF ht_getF(HashTableF ht, char *key );
 
-/*
- * hashTableF_destroy - Freeing all allocations of HashTable
- *
- * @ht - hashtable to destroy
- */
-void hashTableF_destroy(HashTableF ht);
-
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */
 
 

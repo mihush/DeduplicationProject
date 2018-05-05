@@ -12,9 +12,7 @@
 /* ******************** START ******************** HashTable Functions ******************** START ******************* */
 HashTable ht_create(char type , PMemory_pool mem_pool) {
     HashTable ht = NULL;
-    //ht = malloc(sizeof(*ht)); //Allocate the table
     ht = memory_pool_alloc(mem_pool , sizeof(*ht)); //Allocate the table
-
     if(!ht){ //check allocation was successful
         return NULL;
     }
@@ -34,11 +32,9 @@ HashTable ht_create(char type , PMemory_pool mem_pool) {
     }
 
     /* Allocate pointers to the head nodes */
-    //ht -> table = malloc(sizeof(Entry) * (ht->size_table));
     ht -> table = memory_pool_alloc(mem_pool , (sizeof(Entry)*(ht->size_table)));
     if(!ht -> table ){ //check array od pointers was allocated successfully
-        //free(ht);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
 
     for(int i = 0; i < (ht->size_table) ; i++ ){
@@ -71,8 +67,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     newpair->key = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(key)+1)));
 
     if(newpair->key == NULL){
-        //free(newpair);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
     newpair->key = strcpy(newpair->key , key);
 
@@ -85,9 +80,7 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     }
 
     if(newpair->data == NULL) {
-        //free(newpair->key);
-        //free(newpair);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
 
     newpair->next = NULL;

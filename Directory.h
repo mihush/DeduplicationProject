@@ -57,13 +57,6 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , PMemor
 ErrorCode dir_set_parent_dir_sn(Dir dir , unsigned long sn);
 
 /*
- * dir_destroy - Destroys struct of Directory
- *
- * @dir - Pointer to the directory structure that should be destroyed
- */
-//void dir_destroy(Dir dir);
-
-/*
  * dir_add_file - Adds file to a directory object by saving its' ID in the files list of the directory
  *                and updates the files counter of the folder
  *

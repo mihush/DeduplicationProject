@@ -9,9 +9,7 @@
 
 HashTableF ht_createF(char type, PMemory_pool mem_pool) {
     HashTableF ht = NULL;
-
     /* Allocate the table itself */
-    //ht = malloc(sizeof(*ht));
     ht = memory_pool_alloc(mem_pool , sizeof(*ht));
     if(!ht){ //check allocation was successful
         return NULL;
@@ -25,11 +23,9 @@ HashTableF ht_createF(char type, PMemory_pool mem_pool) {
             break;
     }
     /* Allocate pointers to the head nodes */
-    //ht -> table = malloc(sizeof(EntryF) * (ht->size_table));
     ht -> table = memory_pool_alloc(mem_pool , (sizeof(EntryF) * (ht->size_table)));
     if(!ht -> table ){ //check array of pointers was allocated successfully
-        //free(ht);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
     for(int i = 0; i < (ht->size_table) ; i++ ){
         ht->table[i] = NULL;
@@ -59,8 +55,7 @@ EntryF ht_newpairF(char *key, PMemory_pool mem_pool){
 
     newpair->key = memory_pool_alloc(mem_pool , sizeof(char)*(strlen(key)+1));
     if(newpair->key == NULL){
-        //free(newpair);
-        return NULL;
+        return NULL; //All is allocated in POOL - Nothing to Free
     }
     newpair->key = strcpy(newpair->key , key);
     newpair->data = NULL;
@@ -128,25 +123,6 @@ DataF ht_getF(HashTableF ht, char *key ) {
     //found the key - return the data
     return pair->data;
 }
-
-//void hashTableF_destroy(HashTableF ht){
-//    long size_table = ht->size_table;
-//    //long size_of_lists = 0;
-//    struct entryf_t* temp_to_free;
-//    // Remove lists elements of each HashTable cell
-//    for(int i = 0 ; i < size_table ; i++){ // free each list element of cell i
-//        while(ht->table[i]) {
-//            temp_to_free = ht->table[i];
-//            ht->table[i] = temp_to_free->next;
-//            // Destroy elements fields
-//            free(temp_to_free->key);
-//            free(temp_to_free);
-//        }
-//        assert(ht->table[i]==NULL);
-//    }
-//    free(ht->table);
-//    free(ht);
-//}
 
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */
 

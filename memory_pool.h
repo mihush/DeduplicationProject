@@ -3,7 +3,6 @@
 //
 #ifndef DEDUPLICATIONPROJECT_MEMORY_POOL_H
 #define DEDUPLICATIONPROJECT_MEMORY_POOL_H
-//#include "comdef.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +18,7 @@ typedef struct memory_pool_t
 	uint32_t next_free_pool_index; //index inside next pool that is free
 	uint32_t arr[POOL_INITIAL_SIZE]; // array
 	struct memory_pool_t* next_pool; //pointer to the next allocated pool
+	struct memory_pool_t* next_free_pool_ptr; //pointer to the next allocated pool
 }Memory_pool, *PMemory_pool;
 
 /*

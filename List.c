@@ -58,7 +58,7 @@ List listCreate_pool(CopyListElement_pool copyElement , FreeListElement freeElem
     if (!copyElement || !freeElement) {
         return NULL;
     }
-    //List newList = malloc(sizeof(*newList));
+
     List newList = memory_pool_alloc(mem_pool , sizeof(*newList));
     if (!newList) {
         return NULL;
@@ -176,8 +176,7 @@ ListResult listInsertFirst(List list, ListElement element) {
     newNode->next = list->first;
     //and set the first node in the list as the new node
     list->first = newNode;
-    //if we insert the first element
-    //update also the last to point on this element
+    //if we insert the first element - update also the last to point on this element
     if(!list->last){
         list->last = list->first;
     }
@@ -199,8 +198,7 @@ ListResult listInsertFirst_pool(List list, ListElement element , PMemory_pool me
     newNode->next = list->first;
     //and set the first node in the list as the new node
     list->first = newNode;
-    //if we insert the first element
-    //update also the last to point on this element
+    //if we insert the first element - update also the last to point on this element
     if(!list->last){
         list->last = list->first;
     }
@@ -298,13 +296,7 @@ static int listGetIndexOfIterator(List list) {
         nodesToEnd++;
         temp = temp->next;
     }
-    /* size-nodesToEnd is the index of the iterator
-     * example: iterator is at index 3, size is 5
-     * nodesToEnd = 2
-     * (since indexing starts from 0 we are at the
-     * third node so third and fourth are counted)
-     * 5-2=3
-     */
+    /* size-nodesToEnd is the index of the iterator*/
     return listGetSize(list) - nodesToEnd;
 }
 

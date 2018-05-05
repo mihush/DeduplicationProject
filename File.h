@@ -32,7 +32,6 @@ struct file_t{
     List blocks_list;
 
     // Used Only For File-Level Deduplication
-    //HashTableF files_ht; // should be use only for flag = 'P'
     List logical_files_list; // A list of serial numbers of logical files that belong to the physical file
     unsigned int num_files; // should be use only for flag = 'P'
     unsigned long physical_sn;
@@ -60,40 +59,6 @@ typedef struct file_t *File;
  */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
                  unsigned long physical_sn , char dedup_type , PMemory_pool mem_pool);
-
-/*
- *  file_destroy - Destroys and frees space of a file structure
- *
- *  @file - Pointer to the file object to be destroyed
- */
-//void file_destroy(File file , char dedup_type);
-
-/*
- *  file_get_SN - Returns the SN of the file
- *
- *  @file - Pointer to the file object
- */
-//unsigned long file_get_SN(File file);
-
-/*
- * file_get_ID - Returns pointer to the hashed ID of the file
- *
- * @file - Pointer to the file object
- */
-//char* file_get_ID(File file);
-
-/*
- *  file_get_depth - Returns the depth of the file in the hierarchy
- *
- *  @file - Pointer to the file object
- */
-//unsigned int file_get_depth(File file);
-/*
- *  file_get_num_blocks - returns the number of blocks the file contains
- *
- *  @file - Pointer to the file object
- */
-//int file_get_num_blocks(File file);
 
 /*
  *  file_get_num_blocks - returns the number of blocks the file contains

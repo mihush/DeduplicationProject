@@ -45,14 +45,6 @@ Block block_create(char* block_id , unsigned long block_sn ,
                    unsigned int block_size,PMemory_pool mem_pool);
 
 /*
- *  block_destroy - Destroys and frees space of a block structure
- *
- *  @block - pointer to the block structure to be destroyed
- */
-//void block_destroy(Block block);
-
-
-/*
  *  block_add_file - adds the file containing the block to the files list saved in the block
  *
  *  @block   - pointer to the block structure to which we want to add the file

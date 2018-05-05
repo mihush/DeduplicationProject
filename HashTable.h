@@ -92,14 +92,6 @@ Data ht_set(HashTable ht, char *key, unsigned int depth , unsigned long sn , uns
 Data ht_get( HashTable ht, char *key );
 
 /*
- * data_destroy - Destroy the data object
- *
- * @data - pointer to the data object to be destroyed
- * @flag - flag that signifies if the object is flag ('F') or block 'B' or directory 'D'
- */
-void data_destroy(Data data, char flag , char dedup_type);
-
-/*
  * hashTable_destroy - Freeing all allocations of HashTable
  *
  * @ht - hashtable to destroy

@@ -29,7 +29,8 @@ static ListElement copy_directory_info(ListElement directory_info , PMemory_pool
  * @directory_info - pointer to the serial number that should be freed
  */
 static  void free_dir_info(ListElement directory_info){
-    //free(directory_info);
+    //All is allocated in POOL - Nothing to Free
+    //Function exists for Compatibility to List Structure
     return;
 }
 
@@ -46,7 +47,7 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , PMemor
 
     dir->dir_id = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(dir_id) + 1)));
     if(!(dir->dir_id)){
-        //free(dir);
+        //All is allocated in POOL - Nothing to Free
         return NULL;
     }
     dir->dir_id = strcpy(dir->dir_id , dir_id);
@@ -59,8 +60,7 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , PMemor
     dir->files_list = listCreate_pool(copy_directory_info , free_dir_info , mem_pool);
 
     if((!dir->files_list) || (!dir->dirs_list)){
-        //free(dir->dir_id);
-        //free(dir);
+        //All is allocated in POOL - Nothing to Free
         return NULL;
     }
     return dir;
@@ -71,15 +71,6 @@ ErrorCode dir_set_parent_dir_sn(Dir dir , unsigned long sn){
     dir->parent_dir_sn = sn;
     return SUCCESS;
 }
-
-//void dir_destroy(Dir dir){
-//    assert(dir);
-//    //free(dir->dir_id);
-//    //listDestroy(dir->dirs_list);
-//    //listDestroy(dir->files_list);
-//    //free(dir);
-//    return;
-//}
 
 ErrorCode dir_add_file(Dir dir , unsigned long file_sn , PMemory_pool mem_pool){
     if(dir == NULL || file_sn < 0){

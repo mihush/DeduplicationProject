@@ -8,7 +8,6 @@
 
 Block block_create(char* block_id , unsigned long block_sn ,
                    unsigned int block_size, PMemory_pool mem_pool){
-
     Block block = memory_pool_alloc(mem_pool , sizeof(*block)); //create a block
     if(block == NULL){ //Check memory allocation was successful
         return NULL;
@@ -16,7 +15,7 @@ Block block_create(char* block_id , unsigned long block_sn ,
 
     block->block_id = memory_pool_alloc(mem_pool , sizeof(char)*(BLOCK_ID_LEN + 1)); //allocate string for block_id
     if(block->block_id == NULL){ //check successful allocation
-        //free(block);
+        //All is allocated in POOL - Nothing to Free
         return NULL;
     }
     block->block_id = strcpy(block->block_id , block_id);
@@ -26,21 +25,11 @@ Block block_create(char* block_id , unsigned long block_sn ,
 
     block->files_ht = ht_createF('N' , mem_pool);
     if(block->files_ht == NULL){
-        //free(block->block_id);
-        //free(block);
+        //All is allocated in POOL - Nothing to Free
         return NULL;
     }
     return block;
 }
-
-
-//void block_destroy(Block block){
-//    assert(block);
-////    free(block->block_id);
-////    hashTableF_destroy(block->files_ht);
-////    free(block);
-//    return;
-//}
 
 ErrorCode block_add_file(Block block , char* file_id, PMemory_pool mem_pool){
     if(file_id == NULL || block == NULL){ //Check input is valid

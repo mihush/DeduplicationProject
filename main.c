@@ -418,6 +418,7 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
 int main(int argc , char** argv){
     PMemory_pool mem_pool = calloc(1 , sizeof(Memory_pool));
     memory_pool_init(mem_pool);
+
     FILE* monitor_file = fopen("Monitor.txt" , "w+");
     /* ----------------------- Parameters Declarations & Initialization ----------------------- */
     /* Define Files to be read */
@@ -657,20 +658,8 @@ int main(int argc , char** argv){
     print_ht_to_CSV(dedup_type, files_to_read , num_input_files);
     printf("Freeing up Memory .... \n");
     //Free All Hash tables and Lists
-    //hashTable_destroy(ht_files , 'F' , dedup_type);
-    //hashTable_destroy(ht_dirs , 'D' , dedup_type);
-    //hashTable_destroy(ht_blocks , 'B' , dedup_type);
-    //hashTable_destroy(ht_physical_files , 'F' , dedup_type);
     listDestroy(previous_depth_objects);
     listDestroy(curr_depth_objects);
-    // free(current_working_directory);
-//    for(int i = 0 ; i < num_input_files ; i++){
-//        free(files_to_read[i]);
-//        files_to_read[i] = NULL;
-//    }
-
-    //free(files_to_read);
-    //free(roots);
     fclose(monitor_file);
     memory_pool_destroy(mem_pool);
     free(mem_pool);
