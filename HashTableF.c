@@ -28,7 +28,7 @@ HashTableF ht_createF(char type, PMemory_pool mem_pool) {
     //ht -> table = malloc(sizeof(EntryF) * (ht->size_table));
     ht -> table = memory_pool_alloc(mem_pool , (sizeof(EntryF) * (ht->size_table)));
     if(!ht -> table ){ //check array of pointers was allocated successfully
-        free(ht);
+        //free(ht);
         return NULL;
     }
     for(int i = 0; i < (ht->size_table) ; i++ ){
@@ -52,16 +52,14 @@ long int ht_hashF( HashTableF ht, char *key ) {
 }
 
 EntryF ht_newpairF(char *key, PMemory_pool mem_pool){
-    //EntryF newpair  = malloc(sizeof(*newpair));
     EntryF newpair  = memory_pool_alloc(mem_pool , sizeof(*newpair));
     if(newpair == NULL){
         return NULL;
     }
 
-    //newpair->key = malloc(sizeof(char)*(strlen(key)+1));
     newpair->key = memory_pool_alloc(mem_pool , sizeof(char)*(strlen(key)+1));
     if(newpair->key == NULL){
-        free(newpair);
+        //free(newpair);
         return NULL;
     }
     newpair->key = strcpy(newpair->key , key);
@@ -131,24 +129,24 @@ DataF ht_getF(HashTableF ht, char *key ) {
     return pair->data;
 }
 
-void hashTableF_destroy(HashTableF ht){
-    long size_table = ht->size_table;
-    //long size_of_lists = 0;
-    struct entryf_t* temp_to_free;
-    // Remove lists elements of each HashTable cell
-    for(int i = 0 ; i < size_table ; i++){ // free each list element of cell i
-        while(ht->table[i]) {
-            temp_to_free = ht->table[i];
-            ht->table[i] = temp_to_free->next;
-            // Destroy elements fields
-            free(temp_to_free->key);
-            free(temp_to_free);
-        }
-        assert(ht->table[i]==NULL);
-    }
-    free(ht->table);
-    free(ht);
-}
+//void hashTableF_destroy(HashTableF ht){
+//    long size_table = ht->size_table;
+//    //long size_of_lists = 0;
+//    struct entryf_t* temp_to_free;
+//    // Remove lists elements of each HashTable cell
+//    for(int i = 0 ; i < size_table ; i++){ // free each list element of cell i
+//        while(ht->table[i]) {
+//            temp_to_free = ht->table[i];
+//            ht->table[i] = temp_to_free->next;
+//            // Destroy elements fields
+//            free(temp_to_free->key);
+//            free(temp_to_free);
+//        }
+//        assert(ht->table[i]==NULL);
+//    }
+//    free(ht->table);
+//    free(ht);
+//}
 
 /* ********************* END ********************* HashTable Functions ********************* END ******************** */
 

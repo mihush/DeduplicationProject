@@ -7,16 +7,15 @@
 /* ******************* START ******************* File STRUCT Functions ******************* START ******************** */
 File file_create(char* file_id , unsigned int depth , unsigned long file_sn , unsigned int size ,
                  unsigned long physical_sn , char dedup_type , PMemory_pool mem_pool){
-    //File file = malloc(sizeof(*file));
+
     File file = memory_pool_alloc(mem_pool , sizeof(*file));
     if(file == NULL){
         return NULL;
     }
 
-    //file->file_id = malloc(sizeof(char)* (FILE_ID_LEN + 1));
     file->file_id = memory_pool_alloc(mem_pool , sizeof(char)* (FILE_ID_LEN + 1));
     if(file->file_id == NULL){
-        free(file);
+        //free(file);
         return NULL;
     }
 
@@ -32,16 +31,16 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
 
     file->blocks_list = listCreate_pool(copy_block_info , free_block_info , mem_pool);
     if(file->blocks_list == NULL){
-        free(file->file_id);
-        free(file);
+        //free(file->file_id);
+        //free(file);
         return NULL;
     }
 
     if(dedup_type == 'F'){
         file->logical_files_list = listCreate_pool(copy_sn , free_sn , mem_pool);
         if(file->blocks_list == NULL){
-            free(file->file_id);
-            free(file);
+            //free(file->file_id);
+            //free(file);
             return NULL;
         }
         listInsertLast_pool(file->logical_files_list , &(file->file_sn) , mem_pool);
@@ -50,34 +49,15 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
     return file;
 }
 
-void file_destroy(File file , char dedup_type){
-    assert(file);
-    free(file->file_id);
-    listDestroy(file->blocks_list);
-    if(dedup_type == 'F'){
-        listDestroy(file->logical_files_list);
-    }
-    free(file);
-}
-
-//unsigned long file_get_SN(File file){
+//void file_destroy(File file , char dedup_type){
 //    assert(file);
-//    return file->file_sn;
-//}
-
-//char* file_get_ID(File file){
-//    assert(file);
-//    return file->file_id;
-//}
-
-//unsigned int file_get_depth(File file){
-//    assert(file);
-//    return file->file_depth;
-//}
-
-//int file_get_num_blocks(File file){
-//    assert(file);
-//    return file->num_blocks;
+////    free(file->file_id);
+////    listDestroy(file->blocks_list);
+////    if(dedup_type == 'F'){
+////        listDestroy(file->logical_files_list);
+////    }
+////    free(file);
+//    return;
 //}
 
 ErrorCode file_set_parent_dir_sn(File file , unsigned long dir_sn){
@@ -102,11 +82,11 @@ ErrorCode file_add_block(File file , char* block_id , int block_size , PMemory_p
         return INVALID_INPUT;
     }
 
-    Block_Info bi = malloc(sizeof(*bi));
+    Block_Info bi = malloc(sizeof(*bi)); //Temporary Block Info - Do not allocate in POOL !!!!!
     if(bi == NULL){
         return OUT_OF_MEMORY;
     }
-    bi->id =  malloc(sizeof(char)*(strlen(block_id) +1));
+    bi->id =  malloc(sizeof(char)*(strlen(block_id) +1)); //Temporary Block Info - Do not allocate in POOL !!!!!
     if(bi->id == NULL){
         free(bi);
         return OUT_OF_MEMORY;
@@ -114,7 +94,7 @@ ErrorCode file_add_block(File file , char* block_id , int block_size , PMemory_p
     strcpy(bi->id , block_id);
     bi->size = block_size;
 
-    ListResult res = listInsertLast_pool(file->blocks_list , bi , mem_pool);
+    ListResult res = listInsertLast_pool(file->blocks_list , bi , mem_pool); // This will be allocated on the memory pool
 
     if(res != LIST_SUCCESS){
         free(bi->id);

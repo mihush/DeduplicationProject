@@ -30,7 +30,7 @@ bool check_12_z(char buff[STR_OF_Z]){
 /* DIRECTORY NAME */
 char* case_1_directory_name(char buff[BUFFER_SIZE]){
     //only first 10 digits depict the hashed directory name
-    char* dir_name_hash = calloc(DIR_NAME_LEN,sizeof(char));
+    char* dir_name_hash = calloc(DIR_NAME_LEN,sizeof(char)); //Temporary Allocation - Do not allocate in POOL !!!!!
     if(!dir_name_hash){
         return NULL;
     }
@@ -73,6 +73,7 @@ char case_6_file_attribute(char buff[BUFFER_SIZE]){
 /* FILE ID */
 char* case_7_hash_file_id(char buff[BUFFER_SIZE], int ind_num_of_file, char* file_system_id){
     char* file_id = calloc(FILE_ID_LEN , sizeof(char)); // The value is 15 chars + 2 chars for index +1 for eol (end of line)
+    //Temporary Allocation - Do not allocate in POOL !!!!!
     if(file_id == NULL){
         return NULL;
     }
@@ -205,7 +206,6 @@ void update_parent_dir_sn(List previous , List current , int global_depth , int 
 
             } else{
                 temp_dir = (Dir)(ht_get(ht_dirs , iter->object_id));
-                //printf("D - %lu\n", temp_dir->dir_sn);
                 assert(temp_dir);
                 dir_set_parent_dir_sn(temp_dir , root_sn);
                 dir_add_sub_dir(roots[input_file_index],temp_dir->dir_sn , mem_pool);
@@ -242,7 +242,6 @@ void update_parent_dir_sn(List previous , List current , int global_depth , int 
                         dir_add_file(parent_dir_object ,curr_list_iterator->object_sn , mem_pool);
                     } else{
                         temp_dir = (Dir)(ht_get(ht_dirs , curr_list_iterator->object_id));
-                        //printf("D - %lu\n", temp_dir->dir_sn);
                         assert(temp_dir);
                         dir_set_parent_dir_sn(temp_dir , current_sn_to_set);
                         //add to the prevDir object - dir_add_sub_dir
@@ -263,7 +262,7 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
     Block temp_block = NULL;
     Dir temp_dir = NULL;
     FILE *results_file = NULL;
-    char* fileName = malloc(350*sizeof(char));
+    char* fileName = malloc(350*sizeof(char)); //Temporary Allocation - Do not allocate in POOL !!!!!
     fileName = strcpy(fileName , "Parsing_Results_");
 
     if(num_of_input_files < 25) {
@@ -282,15 +281,11 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
         fileName = strcat(fileName, buff);
     }
 
-
-
     if( dedup_type == 'B'){
         fileName = strcat(fileName , "_B.csv");
     } else {
         fileName = strcat(fileName , "_F.csv");
     }
-
-    //printf("Opening file : %s\n",fileName);
 
     // Open the output file
     results_file = fopen(fileName , "w+");
@@ -331,16 +326,13 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
             pair = ht_files->table[i];
             while( pair != NULL && pair->key != NULL) {
                 temp_file = ((File)(pair->data));
-                //printf("F - %lu - %s\n",temp_file->file_sn,temp_file->file_id);
                 fprintf(results_file , "F,%lu,%s,%lu,%d,",
                         temp_file->file_sn, temp_file->file_id , temp_file->dir_sn,
                         temp_file->num_blocks);
-                //Object_Info temp_oi;
                 LIST_FOREACH(Block_Info , iter ,temp_file->blocks_list){
                     unsigned long block_sn = ((Block)(ht_get(ht_blocks , iter->id)))->block_sn;
                     fprintf(results_file ,"%lu,%d," , block_sn , iter->size);
                 }
-                //temp_oi = listGetFirst(temp_file->blocks_list);
                 fprintf(results_file ,"\n");
                 pair = pair->next;
             }
@@ -350,7 +342,6 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
             pair = ht_blocks->table[i];
             while( pair != NULL && pair->key != NULL) {
                 temp_block = ((Block)(pair->data));
-                //printf("B - %lu - %s\n",temp_block->block_sn,temp_block->block_id);
                 fprintf(results_file , "B,%lu,%s,%d,",
                         temp_block->block_sn , temp_block->block_id,
                         temp_block->shared_by_num_files);
@@ -371,7 +362,6 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
             pair = ht_files->table[i];
             while( pair != NULL && pair->key != NULL) {
                 temp_file = ((File)(pair->data));
-                //printf("LF - %lu - %s\n",temp_file->file_sn,temp_file->file_id);
                 fprintf(results_file , "F,%lu,%s,%lu,%d,%lu,%d,\n",
                         temp_file->file_sn, temp_file->file_id , temp_file->dir_sn,
                         1, temp_file->physical_sn, temp_file->file_size);
@@ -382,7 +372,6 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
         //Print physical files
         for(int i = 0 ; i < (ht_physical_files->size_table) ;i++){
             pair = ht_physical_files->table[i];
-            //printf("PF - %lu - %s\n",temp_file->physical_sn , temp_file->file_id);
             while( pair != NULL && pair->key != NULL) {
                 temp_file = ((File)(pair->data));
                 fprintf(results_file , "P,%lu,%s,%d,",
@@ -402,7 +391,6 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
         pair = ht_dirs->table[i];
         while( pair != NULL && pair->key != NULL) {
             temp_dir = ((Dir)(pair->data));
-            //printf("D - %lu - %s\n",temp_dir->dir_sn,temp_dir->dir_id);
             if(temp_dir->dir_depth == -1){
                 fprintf(results_file , "R,");
             }else {
@@ -418,7 +406,6 @@ void print_ht_to_CSV(char dedup_type , char** files_to_read, int num_of_input_fi
                 fprintf(results_file ,"%lu," , *(iter));
             }
             fprintf(results_file , "\n");
-            //printf("----\n");
             pair = pair->next;
         }
     }
@@ -448,20 +435,17 @@ int main(int argc , char** argv){
     num_input_files = atoi(argv[2]);
     printf("%d\n" , num_input_files);
 
-    //current_working_directory = calloc((strlen(argv[3]) + 1) , sizeof(char));
     current_working_directory = (char*)memory_pool_alloc(mem_pool , (strlen(argv[3]) + 1)*sizeof(char));
     strcpy(current_working_directory , argv[3]);
     printf("%s\n" , current_working_directory);
 
     /* Read the rest of the line to get all file names */
-    //files_to_read = malloc(num_input_files * sizeof(char*));
     files_to_read = (char**)memory_pool_alloc(mem_pool , (num_input_files * sizeof(char*)));
     for(int i = 0 ; i < num_input_files ; i++){
-        //files_to_read[i] = (char*)malloc((strlen(argv[4 + i]) + 1) * sizeof(char));
         files_to_read[i] = (char*)memory_pool_alloc(mem_pool,(strlen(argv[4 + i]) + 1) * sizeof(char));
         strcpy(files_to_read[i] , argv[4 + i]);
     }
-    //roots = malloc(num_input_files* sizeof(*roots));
+
     roots = memory_pool_alloc(mem_pool, num_input_files* sizeof(*roots));
 
     /* File  Manipulation Variables */
@@ -508,10 +492,11 @@ int main(int argc , char** argv){
     /* ------------------------------------- File Reading ------------------------------------- */
     /* Go over all file systems */
     for (int i = 0; i < num_input_files ; ++i) { /* (1) Read an Input File */
-        current_file = calloc((strlen(current_working_directory) + strlen(files_to_read[i]) + 1) , sizeof(char)); //stays with regular malloc
+        current_file = calloc((strlen(current_working_directory) + strlen(files_to_read[i]) + 1) , sizeof(char)); //Temporary Allocation - Do not allocate in POOL !!!!!
         strcpy(current_file , current_working_directory);
         strcat(current_file , files_to_read[i]);
         fprintf(monitor_file, "(Parser)--> ----- Opening File %s ----- \n" , current_file);
+        printf("(Parser)--> ----- Opening File %s ----- \n" , current_file);
         input_file = fopen(current_file , "r");
         if(input_file == NULL){ //check the file was opened successfully - if not terminate
             printf("(Parser)--> Can't open input file/s =[ \n");
@@ -519,6 +504,7 @@ int main(int argc , char** argv){
         }
         free(current_file);
         fprintf(monitor_file, "(Parser)-->  ----- Start Reading the file ----- \n");
+        printf("(Parser)-->  ----- Start Reading the file ----- \n");
         fgets(buff, BUFFER_SIZE , input_file); //Read First Line
         clear_line(buff);
         fgets(buff, BUFFER_SIZE , input_file); //Read Second Line
@@ -537,6 +523,7 @@ int main(int argc , char** argv){
 
         set_root = true;
         fprintf(monitor_file, "(Parser)--> --- Skipped over the file-system data block successfully--- \n");
+        printf("(Parser)--> --- Skipped over the file-system data block successfully--- \n");
 
         /* Read File till the end - parse each block and add it to the corresponding structure */
         while(!feof(input_file)){
@@ -595,7 +582,6 @@ int main(int argc , char** argv){
                                 strcat(root_id , "root");
                                 root_id[8] = '\0';
                                 roots[i] = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already , 0 , dedup_type , mem_pool);
-                                //root_directory = ht_set(ht_dirs , root_id , -1 , dir_sn ,DIR_SIZE , 'D' , &object_exists_in_hash_already);
                                 dir_sn++;
                                 free(root_id);
                                 set_root = false;
@@ -677,7 +663,7 @@ int main(int argc , char** argv){
     //hashTable_destroy(ht_physical_files , 'F' , dedup_type);
     listDestroy(previous_depth_objects);
     listDestroy(curr_depth_objects);
-   // free(current_working_directory);
+    // free(current_working_directory);
 //    for(int i = 0 ; i < num_input_files ; i++){
 //        free(files_to_read[i]);
 //        files_to_read[i] = NULL;

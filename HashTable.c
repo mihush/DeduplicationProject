@@ -37,7 +37,7 @@ HashTable ht_create(char type , PMemory_pool mem_pool) {
     //ht -> table = malloc(sizeof(Entry) * (ht->size_table));
     ht -> table = memory_pool_alloc(mem_pool , (sizeof(Entry)*(ht->size_table)));
     if(!ht -> table ){ //check array od pointers was allocated successfully
-        free(ht);
+        //free(ht);
         return NULL;
     }
 
@@ -62,15 +62,16 @@ unsigned long int ht_hash( HashTable ht, char *key ) {
 
 Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int size , char flag ,
                  unsigned long physical_sn , char dedup_type , PMemory_pool mem_pool){
-    Entry newpair  = malloc(sizeof(*newpair));
+
+    Entry newpair  = memory_pool_alloc(mem_pool , sizeof(*newpair));
     if(newpair == NULL){
         return NULL;
     }
-    //newpair->key = malloc(sizeof(char)*(strlen(key)+1));
+
     newpair->key = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(key)+1)));
 
     if(newpair->key == NULL){
-        free(newpair);
+        //free(newpair);
         return NULL;
     }
     newpair->key = strcpy(newpair->key , key);
@@ -84,8 +85,8 @@ Entry ht_newpair(char *key, unsigned int depth , unsigned long sn , unsigned int
     }
 
     if(newpair->data == NULL) {
-        free(newpair->key);
-        free(newpair);
+        //free(newpair->key);
+        //free(newpair);
         return NULL;
     }
 
@@ -164,43 +165,6 @@ Data ht_get(HashTable ht, char *key ) {
     return pair->data;
 }
 
-void data_destroy(Data data, char flag , char dedup_type){
-    switch (flag){
-        case 'F':
-            file_destroy((File)data , dedup_type);
-            break;
-        case 'D':
-            dir_destroy((Dir)data);
-            break;
-        case 'B':
-            block_destroy((Block)data);
-            break;
-    }
-}
-
-void hashTable_destroy(HashTable ht , char flag , char dedup_type){
-    if(!ht){
-        return;
-    }
-    long size_table = ht->size_table;
-    //long size_of_lists = 0;
-    struct entry_t* temp_to_free;
-    // Remove lists elements of each HashTable cell
-    for(long i = 0 ; i < size_table ; i++){
-        while(ht->table[i]) {         // free each list element of cell i
-            temp_to_free = ht->table[i];
-            ht->table[i] = temp_to_free->next;
-            // Destroy elements fields
-            data_destroy(temp_to_free->data , flag , dedup_type);
-            free(temp_to_free->key);
-            free(temp_to_free);
-        }
-        assert(ht->table[i] == NULL);
-    }
-    free(ht->table);
-    free(ht);
-}
-
 Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
                   File file , File file_obj_p, unsigned long* physical_files_sn,
                   char dedup_type , PMemory_pool mem_pool){
@@ -254,21 +218,19 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
     /* ---------------------------------- Adding the file to hash table ----------------------------------- */
     if(physical_file_exist == true) { // physical file already exits - add file to ht_files only
         file_set_logical_flag(file);
-        listInsertLast(temp_file->logical_files_list , &(file->file_sn));
+        listInsertLast_pool(temp_file->logical_files_list , &(file->file_sn) , mem_pool);
         (temp_file->num_files)++;
         file_set_physical_sn(file , temp_file->physical_sn); // set the physical sn of the logical file to be the one of the physical stored
         (*physical_files_sn)--;
-        file_destroy(file_obj_p , dedup_type);
+        //file_destroy(file_obj_p , dedup_type);4-5-18
     } else { //add file only to ht_physical_files and to ht_files
         // hash by first block id
         hash_key = ht_hash(ht_physical_files , first_block_id);
         Entry ent = ht_physical_files->table[hash_key];
 
-        //Entry newpair  = malloc(sizeof(*newpair));
         Entry newpair  = memory_pool_alloc(mem_pool , sizeof(*newpair));
         assert(newpair);
 
-        //newpair->key = malloc(sizeof(char)*(strlen(first_block_id) + 1));
         newpair->key = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(first_block_id) + 1)));
         assert(newpair->key);
 
@@ -284,12 +246,10 @@ Data file_compare(HashTable ht_files , HashTable ht_physical_files ,
     Entry curr = ht_files->table[hash_key_f];
 
     //Just add the logical file to the hashtable of logical files
-    //Entry newpair_l  = malloc(sizeof(*newpair_l));
     Entry newpair_l  = memory_pool_alloc(mem_pool , sizeof(*newpair_l));
     if(newpair_l == NULL){
         return NULL;
     }
-    //newpair_l->key = malloc(sizeof(char)*(strlen(file->file_id)+1));
     newpair_l->key = memory_pool_alloc(mem_pool , sizeof(char)*(strlen(file->file_id)+1));
     assert(newpair_l->key);
     newpair_l->key = strcpy(newpair_l->key , file->file_id);

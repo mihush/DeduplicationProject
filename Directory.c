@@ -12,10 +12,10 @@
  *
  * @directory_info - pointer to the serial number of the directory to be copied
  */
-static ListElement copy_directory_info(ListElement directory_info){
+static ListElement copy_directory_info(ListElement directory_info , PMemory_pool mem_pool){
     assert(directory_info);
     unsigned long* sn = (unsigned long*)(directory_info);
-    unsigned long* sn_copy = malloc(sizeof(*sn_copy));
+    unsigned long* sn_copy = memory_pool_alloc(mem_pool , sizeof(*sn_copy));
     if(sn_copy == NULL){
         return NULL;
     }
@@ -29,7 +29,8 @@ static ListElement copy_directory_info(ListElement directory_info){
  * @directory_info - pointer to the serial number that should be freed
  */
 static  void free_dir_info(ListElement directory_info){
-    free(directory_info);
+    //free(directory_info);
+    return;
 }
 
 
@@ -38,15 +39,14 @@ static  void free_dir_info(ListElement directory_info){
 /* ****************************************************************************************************************** */
 /* ****************** START ****************** Directory STRUCT Functions ****************** START ****************** */
 Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , PMemory_pool mem_pool){
-    //Dir dir = malloc(sizeof(*dir));
     Dir dir = memory_pool_alloc(mem_pool , sizeof(*dir));
     if(dir == NULL){
         return NULL;
     }
-    //dir->dir_id = malloc((sizeof(char)*(strlen(dir_id) + 1)));
+
     dir->dir_id = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(dir_id) + 1)));
     if(!(dir->dir_id)){
-        free(dir);
+        //free(dir);
         return NULL;
     }
     dir->dir_id = strcpy(dir->dir_id , dir_id);
@@ -59,8 +59,8 @@ Dir dir_create(char* dir_id , unsigned int depth , unsigned long dir_sn , PMemor
     dir->files_list = listCreate_pool(copy_directory_info , free_dir_info , mem_pool);
 
     if((!dir->files_list) || (!dir->dirs_list)){
-        free(dir->dir_id);
-        free(dir);
+        //free(dir->dir_id);
+        //free(dir);
         return NULL;
     }
     return dir;
@@ -72,13 +72,14 @@ ErrorCode dir_set_parent_dir_sn(Dir dir , unsigned long sn){
     return SUCCESS;
 }
 
-void dir_destroy(Dir dir){
-    assert(dir);
-    free(dir->dir_id);
-    listDestroy(dir->dirs_list);
-    listDestroy(dir->files_list);
-    free(dir);
-}
+//void dir_destroy(Dir dir){
+//    assert(dir);
+//    //free(dir->dir_id);
+//    //listDestroy(dir->dirs_list);
+//    //listDestroy(dir->files_list);
+//    //free(dir);
+//    return;
+//}
 
 ErrorCode dir_add_file(Dir dir , unsigned long file_sn , PMemory_pool mem_pool){
     if(dir == NULL || file_sn < 0){
@@ -90,7 +91,7 @@ ErrorCode dir_add_file(Dir dir , unsigned long file_sn , PMemory_pool mem_pool){
     }
 
     *temp = file_sn;
-    ListResult res = listInsertFirst_pool(dir->files_list , temp ,mem_pool );
+    ListResult res = listInsertFirst_pool(dir->files_list , temp ,mem_pool);
     if(res != LIST_SUCCESS){
         free(temp);
         return OUT_OF_MEMORY;

@@ -76,43 +76,11 @@ typedef void* ListElement;
 * @endcode
 */
 typedef ListElement(*CopyListElement)(ListElement);
+typedef ListElement(*CopyListElement_pool)(ListElement,PMemory_pool);
 
 /** Type of function for deallocating an element of the list */
 typedef void(*FreeListElement)(ListElement);
 
-/**
-* Type of function that can be used by the list for sorting or finding.
-* This function should return a value greater than 0 if the second element is
-* greater, 0 if they're equal and a number smaller than 0 if the first
-* element is greater.
-* For example, the following function can use to sort a list of integers
-* according to which is closer to a given number (given as the key)
-* @code
-* int closerTo(ListElement num1, ListElement num2) {
-*   return *(int*)num2 - *(int*)num1;
-* }
-* @endcode
-*/
-typedef int(*CompareListElements)(ListElement, ListElement);
-
-/**
-* Use this type to pass extra information needed by the filtering function
-* when calling listFilter. (See the example for a FilterListElement function)
-*/
-typedef void* ListFilterKey;
-
-/**
-* Function used for creating a filtered copy of a list.
-* A element is said to pass filtering if the function returns true
-* For example, the following function can be used to filter a list of strings
-* from short strings:
-* @code
-* bool isShorterThan(ListElement str, ListFilterKey length) {
-*   return strlen(str) < *(int*) length;
-* }
-* @endcode
-*/
-typedef bool(*FilterListElement)(ListElement, ListFilterKey);
 
 /**
 * Allocates a new List.
@@ -139,7 +107,7 @@ typedef bool(*FilterListElement)(ListElement, ListFilterKey);
 * 	A new List in case of success.
 */
 List listCreate(CopyListElement copyElement, FreeListElement freeElement);
-List listCreate_pool(CopyListElement copyElement , FreeListElement freeElement , PMemory_pool pool);
+List listCreate_pool(CopyListElement_pool copyElement , FreeListElement freeElement , PMemory_pool pool);
 
 /**
 * Creates a copy of target list.
@@ -188,30 +156,6 @@ int listGetSize(List list);
 * The first element of the list otherwise
 */
 ListElement listGetFirst(List list);
-
-/**
-* Sets the internal iterator to the first element and retrieves it.
-*
-* The list has an internal iterator (also called current element) to allow
-* iteration over the list's elements. This function sets the iterator to point
-* to the last element in the list and return it.
-* Use this to insert element from the end of the list
-* the list and/or get the last element in the list.
-* (To continue iteration use listGetNext)
-* @code
-* void f(List list) {
-*   ListElement last = listGetLast(list);
-*   printf("The last element is at address %x\n", last);
-* }
-* @endcode
-*
-* @param list The list for which to set the iterator and return the first
-* element.
-* @return
-* NULL is a NULL pointer was sent or the list is empty.
-* The first element of the list otherwise
-*/
-//ListElement listGetLast(List list);
 
 /**
 * Advances the list's iterator to the next element and return it

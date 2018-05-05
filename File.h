@@ -66,7 +66,7 @@ File file_create(char* file_id , unsigned int depth , unsigned long file_sn , un
  *
  *  @file - Pointer to the file object to be destroyed
  */
-void file_destroy(File file , char dedup_type);
+//void file_destroy(File file , char dedup_type);
 
 /*
  *  file_get_SN - Returns the SN of the file

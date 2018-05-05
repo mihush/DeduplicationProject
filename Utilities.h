@@ -40,10 +40,11 @@ typedef enum{
  *
  * @directory_info - pointer to the serial number of the directory to be copied
  */
-static ListElement copy_sn(ListElement element){
+static ListElement copy_sn(ListElement element , PMemory_pool mem_pool){
     assert(element);
     unsigned long* sn = (unsigned long*)(element);
-    unsigned long* sn_copy = malloc(sizeof(*sn_copy));
+    //unsigned long* sn_copy = malloc(sizeof(*sn_copy));
+    unsigned long* sn_copy = memory_pool_alloc(mem_pool , sizeof(*sn_copy));
     if(sn_copy == NULL){
         return NULL;
     }
@@ -57,7 +58,8 @@ static ListElement copy_sn(ListElement element){
  * @directory_info - pointer to the serial number that should be freed
  */
 static  void free_sn(ListElement element){
-    free(element);
+    //free(element);
+    return;
 }
 
 /* ******************** START ******************** object_info struct ******************** START ******************** */
@@ -109,7 +111,7 @@ typedef struct block_info* Block_Info;
 /*
  *
  */
-ListElement copy_block_info(ListElement block_info);
+ListElement copy_block_info(ListElement block_info , PMemory_pool mem_pool);
 
 /*
  *

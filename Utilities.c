@@ -73,22 +73,22 @@ void object_info_destroy(ListElement object_info){
     free(object_info);
 }
 
-/* ********************* END ********************* object_info struct ********************* END ********************* */
-/* ******************** START ******************** block_info struct ******************** START ********************* */
+/* ********************* END ********************* object_info Struct ********************* END ********************* */
+/* ******************** START ******************** block_info Struct ******************** START ********************* */
 
-ListElement copy_block_info(ListElement block_info){
+ListElement copy_block_info(ListElement block_info , PMemory_pool mem_pool){
     assert(block_info);
     Block_Info bi = (Block_Info)(block_info);
 
-    Block_Info bi_copy = malloc(sizeof(*bi_copy));
+    Block_Info bi_copy = memory_pool_alloc(mem_pool , sizeof(*bi_copy));
     if(bi_copy == NULL){
         return NULL;
     }
 
     bi_copy->size = bi->size;
-    bi_copy->id = malloc(sizeof(char)*(strlen(bi->id) +1));
+    bi_copy->id = memory_pool_alloc(mem_pool , (sizeof(char)*(strlen(bi->id) +1)));
     if(bi_copy->id == NULL){
-        free(bi_copy);
+        //free(bi_copy);
         return NULL;
     }
     strcpy(bi_copy->id , bi->id);
@@ -97,8 +97,9 @@ ListElement copy_block_info(ListElement block_info){
 }
 
 void free_block_info(ListElement block_info){
-    free(((Block_Info)(block_info))->id);
-    free((Block_Info)(block_info));
+    //free(((Block_Info)(block_info))->id);
+    //free((Block_Info)(block_info));
+    return;
 }
 
 /* ********************** END ********************* block_info struct ********************* END ********************* */

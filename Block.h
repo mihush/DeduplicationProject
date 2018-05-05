@@ -49,21 +49,8 @@ Block block_create(char* block_id , unsigned long block_sn ,
  *
  *  @block - pointer to the block structure to be destroyed
  */
-void block_destroy(Block block);
+//void block_destroy(Block block);
 
-/*
- *  block_get_SN - returns the SN of the block
- *
- *  @block - pointer to the block structure
- */
-//long block_get_SN(Block block);
-
-/*
- *  block_get_ID - Returns the hashed id of the block
- *
- *  @block - pointer to the block structure
- */
-//har* block_get_ID(Block block);
 
 /*
  *  block_add_file - adds the file containing the block to the files list saved in the block

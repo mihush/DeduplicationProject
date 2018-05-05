@@ -19,6 +19,7 @@ struct List_t {
     Node iterator;
     int size;
     CopyListElement copyElement;
+    CopyListElement_pool copyElement_pool;
     FreeListElement freeElement;
 };
 /*-------------- End - includes & Defines --------------*/
@@ -29,7 +30,7 @@ static int listGetIndexOfIterator(List list);
 //static void destroyNodes(Node toDestroy, FreeListElement freeFunction);
 static void destroyNodes_NonRec(Node toDestroy, FreeListElement freeFunction);
 static Node nodeCreate(ListElement data, CopyListElement copyFunction);
-static Node nodeCreate_pool(ListElement data, CopyListElement copyFunction , PMemory_pool mem_pool);
+static Node nodeCreate_pool(ListElement data, CopyListElement_pool copyFunction , PMemory_pool mem_pool);
 
 /* ----END---- STATIC FUNCTION DECLARATIONS ----END---- */
 /*---------------- Structure Functions ----------------*/
@@ -43,6 +44,7 @@ List listCreate(CopyListElement copyElement, FreeListElement freeElement) {
         return NULL;
     }
     newList->copyElement = copyElement;
+    newList->copyElement_pool = NULL;
     newList->freeElement = freeElement;
     newList->first = NULL;
     newList->last = NULL;
@@ -51,7 +53,7 @@ List listCreate(CopyListElement copyElement, FreeListElement freeElement) {
     return newList;
 }
 
-List listCreate_pool(CopyListElement copyElement , FreeListElement freeElement , PMemory_pool mem_pool) {
+List listCreate_pool(CopyListElement_pool copyElement , FreeListElement freeElement , PMemory_pool mem_pool) {
     //Check for invalid arguments
     if (!copyElement || !freeElement) {
         return NULL;
@@ -61,7 +63,8 @@ List listCreate_pool(CopyListElement copyElement , FreeListElement freeElement ,
     if (!newList) {
         return NULL;
     }
-    newList->copyElement = copyElement;
+    newList->copyElement_pool = copyElement;
+    newList->copyElement = NULL;
     newList->freeElement = freeElement;
     newList->first = NULL;
     newList->last = NULL;
@@ -139,18 +142,6 @@ ListElement listGetFirst(List list) {
     return list->first->data;
 }
 
-//ListElement listGetLast(List list) {
-//    //Check for invalid arguments
-//    if (!list) {
-//        return NULL;
-//    }
-//    list->iterator = list->last;
-//    if (!list->iterator || !list->iterator->data) {
-//        return NULL;
-//    }
-//    return list->last->data;
-//}
-
 ListElement listGetNext(List list) {
     //Check for invalid arguments
     if (!list || !list->iterator) {
@@ -200,7 +191,7 @@ ListResult listInsertFirst_pool(List list, ListElement element , PMemory_pool me
         return LIST_NULL_ARGUMENT;
     }
     //create a new node for insertion in the beginning
-    Node newNode = nodeCreate_pool(element , list->copyElement , mem_pool);
+    Node newNode = nodeCreate_pool(element , list->copyElement_pool , mem_pool);
     if (!newNode) {
         return LIST_OUT_OF_MEMORY;
     }
@@ -216,6 +207,7 @@ ListResult listInsertFirst_pool(List list, ListElement element , PMemory_pool me
     (list->size)++;
     return LIST_SUCCESS;
 }
+
 ListResult listInsertLast(List list, ListElement element) {
     //Check for invalid arguments
     if (!list || !element) {
@@ -253,7 +245,7 @@ ListResult listInsertLast_pool(List list, ListElement element, PMemory_pool mem_
         return LIST_NULL_ARGUMENT;
     }
     //create a new node for insertion in the end
-    Node newNode = nodeCreate_pool(element , list->copyElement , mem_pool);
+    Node newNode = nodeCreate_pool(element , list->copyElement_pool , mem_pool);
     if (!newNode) {
         return LIST_OUT_OF_MEMORY;
     }
@@ -316,20 +308,6 @@ static int listGetIndexOfIterator(List list) {
     return listGetSize(list) - nodesToEnd;
 }
 
-/* @param toDestroy - the node from which to begin destroying all nodes after
- * @param freeFunction - the function with which to free the type "ListElement"
- * destroys the set of nodes that begins with the supplied node
- */
-//static void destroyNodes(Node toDestroy, FreeListElement freeFunction) {
-//    if (!toDestroy) {
-//        return;
-//    }
-//
-//    destroyNodes(toDestroy->next, freeFunction);
-//    freeFunction(toDestroy->data);
-//    free(toDestroy);
-//}
-
 static void destroyNodes_NonRec(Node toDestroy, FreeListElement freeFunction) {
     if (!toDestroy) {
         return;
@@ -370,16 +348,17 @@ static Node nodeCreate(ListElement data, CopyListElement copyFunction) {
     newNode->next = NULL;
     return newNode;
 }
-static Node nodeCreate_pool(ListElement data, CopyListElement copyFunction , PMemory_pool mem_pool) {
+
+static Node nodeCreate_pool(ListElement data, CopyListElement_pool copyFunction , PMemory_pool mem_pool) {
     if (!data) {
         return NULL;
     }
-    //Node newNode = malloc(sizeof(*newNode));
+
     Node newNode = memory_pool_alloc(mem_pool , sizeof(*newNode));
     if (!newNode) {
         return NULL;
     }
-    newNode->data = copyFunction(data);
+    newNode->data = copyFunction(data , mem_pool);
     if (!newNode->data) {
         free(newNode);
         return NULL;
