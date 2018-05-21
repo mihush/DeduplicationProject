@@ -35,7 +35,6 @@ struct file_t{
     List logical_files_list; // A list of serial numbers of logical files that belong to the physical file
     unsigned int num_files; // should be use only for flag = 'P'
     unsigned long physical_sn;
-
 };
 typedef struct file_t *File;
 
